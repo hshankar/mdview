@@ -12,6 +12,10 @@ struct MDViewApp {
             case .version:
                 print("mdview \(CLI.version)")
             case let .view(fileURL):
+                if !ViewerMessageClient.openInRunningViewer(fileURL) {
+                    try ViewerServerLauncher.launch(opening: fileURL)
+                }
+            case let .serve(fileURL):
                 runApplication(opening: fileURL)
             }
         } catch {

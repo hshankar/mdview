@@ -2,6 +2,7 @@ import Foundation
 
 enum LaunchRequest: Equatable {
     case view(URL)
+    case serve(URL)
     case help
     case version
 }
@@ -47,6 +48,14 @@ enum CLI {
         guard let argument = arguments.first else {
             throw CLIError.missingFile
         }
+
+        if argument == "--server" {
+            guard arguments.count == 2 else {
+                throw CLIError.missingFile
+            }
+            return .serve(try validatedFileURL(arguments[1], fileManager: fileManager))
+        }
+
         guard arguments.count == 1 else {
             throw CLIError.tooManyArguments
         }
@@ -62,16 +71,22 @@ enum CLI {
             }
         }
 
-        let expandedPath = (argument as NSString).expandingTildeInPath
+        return .view(try validatedFileURL(argument, fileManager: fileManager))
+    }
+
+    private static func validatedFileURL(
+        _ path: String,
+        fileManager: FileManager
+    ) throws -> URL {
+        let expandedPath = (path as NSString).expandingTildeInPath
         let url = URL(fileURLWithPath: expandedPath).standardizedFileURL
         var isDirectory = ObjCBool(false)
         guard fileManager.fileExists(atPath: url.path, isDirectory: &isDirectory) else {
-            throw CLIError.fileDoesNotExist(argument)
+            throw CLIError.fileDoesNotExist(path)
         }
         guard !isDirectory.boolValue else {
-            throw CLIError.pathIsNotAFile(argument)
+            throw CLIError.pathIsNotAFile(path)
         }
-
-        return .view(url)
+        return url
     }
 }

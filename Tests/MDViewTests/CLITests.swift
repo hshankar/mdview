@@ -13,6 +13,10 @@ final class CLITests: XCTestCase {
         try Data("# Hello".utf8).write(to: file)
 
         XCTAssertEqual(try CLI.parse(arguments: [file.path]), .view(file.standardizedFileURL))
+        XCTAssertEqual(
+            try CLI.parse(arguments: ["--server", file.path]),
+            .serve(file.standardizedFileURL)
+        )
     }
 
     func testParsesHelpAndVersion() throws {
