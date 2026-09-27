@@ -233,9 +233,13 @@ This architecture is preferred over a custom GPU renderer because macOS already 
 ## 16. Distribution
 
 - Provide an installable `mdview` command on the user's `PATH`.
+- Ship a universal release supporting both Intel and Apple silicon Macs.
+- Provide a noninteractive installer suitable for clean cloud macOS machines.
+- Verify downloaded release archives with a published SHA-256 checksum.
 - A release build should not require a separate language runtime or package manager.
 - All required templates, styles, and highlighting assets must ship with the application.
 - Code signing and notarization are desirable for public distribution.
+- Build and test release artifacts automatically in CI.
 - A future `.app` bundle may support opening `.md` files from Finder while retaining the CLI entry point.
 
 ## 17. MVP acceptance criteria

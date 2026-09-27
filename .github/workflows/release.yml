@@ -1,0 +1,72 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - "v[0-9]+.[0-9]+.[0-9]+"
+
+permissions:
+  contents: write
+
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  release:
+    runs-on: macos-14
+    timeout-minutes: 25
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Validate version
+        run: |
+          version="${GITHUB_REF_NAME#v}"
+          grep -F "static let version = \"$version\"" Sources/MDView/CLI.swift
+
+      - name: Run tests
+        run: swift test
+
+      - name: Build universal release package
+        run: |
+          version="${GITHUB_REF_NAME#v}"
+          scripts/package-release.sh "$version" dist
+
+      - name: Prepare stable asset names
+        run: |
+          version="${GITHUB_REF_NAME#v}"
+          cp "dist/mdview-$version-macos-universal.tar.gz" \
+             dist/mdview-macos-universal.tar.gz
+          (
+            cd dist
+            shasum -a 256 mdview-macos-universal.tar.gz \
+              > mdview-macos-universal.tar.gz.sha256
+          )
+
+      - name: Verify package
+        run: |
+          version="${GITHUB_REF_NAME#v}"
+          rm -rf "$RUNNER_TEMP/package"
+          mkdir -p "$RUNNER_TEMP/package"
+          tar -xzf "dist/mdview-$version-macos-universal.tar.gz" \
+            -C "$RUNNER_TEMP/package"
+          binary="$RUNNER_TEMP/package/mdview-$version-macos-universal/mdview"
+          lipo -archs "$binary" | grep -q arm64
+          lipo -archs "$binary" | grep -q x86_64
+          codesign --verify --verbose "$binary"
+
+      - name: Create GitHub release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          version="${GITHUB_REF_NAME#v}"
+          gh release create "$GITHUB_REF_NAME" \
+            "dist/mdview-$version-macos-universal.tar.gz" \
+            "dist/mdview-$version-macos-universal.tar.gz.sha256" \
+            dist/mdview-macos-universal.tar.gz \
+            dist/mdview-macos-universal.tar.gz.sha256 \
+            --verify-tag \
+            --generate-notes \
+            --title "mdview $version"

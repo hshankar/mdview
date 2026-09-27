@@ -1,0 +1,50 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  test-and-package:
+    runs-on: macos-14
+    timeout-minutes: 20
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Show toolchain
+        run: |
+          swift --version
+          xcodebuild -version
+          sw_vers
+
+      - name: Run tests
+        run: swift test
+
+      - name: Build universal release package
+        run: scripts/package-release.sh 0.1.0-ci dist
+
+      - name: Verify universal binary
+        run: |
+          rm -rf "$RUNNER_TEMP/package"
+          mkdir -p "$RUNNER_TEMP/package"
+          tar -xzf dist/mdview-0.1.0-ci-macos-universal.tar.gz -C "$RUNNER_TEMP/package"
+          binary="$RUNNER_TEMP/package/mdview-0.1.0-ci-macos-universal/mdview"
+          lipo -archs "$binary" | grep -q arm64
+          lipo -archs "$binary" | grep -q x86_64
+          codesign --verify --verbose "$binary"
+
+      - name: Test noninteractive installer
+        env:
+          MDVIEW_ARCHIVE: ${{ github.workspace }}/dist/mdview-0.1.0-ci-macos-universal.tar.gz
+          MDVIEW_CHECKSUM_FILE: ${{ github.workspace }}/dist/mdview-0.1.0-ci-macos-universal.tar.gz.sha256
+          MDVIEW_INSTALL_DIR: ${{ runner.temp }}/mdview-bin
+        run: |
+          ./install.sh
+          "$MDVIEW_INSTALL_DIR/mdview" --version
+          test -d "$MDVIEW_INSTALL_DIR/mdview_MDView.bundle"

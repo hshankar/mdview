@@ -26,46 +26,72 @@ mdview README.md
 ## Requirements
 
 - macOS 13 or newer
-- Swift 5.10 or newer to build
+- An Intel or Apple silicon Mac
 
-The current release target is Apple silicon. Swift can also build the package for Intel macOS on an Intel machine or with an appropriate universal-build workflow.
+Release archives are universal and do not require Swift, Xcode, Homebrew, or another language runtime on the destination Mac.
 
-## Build and run
+## Install a release
+
+Because the repository is currently private, authenticate GitHub CLI once and run:
+
+```sh
+gh auth login
+gh api repos/hshankar/mdview/contents/install.sh --jq .content \
+  | base64 --decode \
+  | sh
+```
+
+The installer downloads the latest release, verifies its SHA-256 checksum and code signature, and installs into `/usr/local/bin` when writable. Otherwise it uses `~/.local/bin` and prints the required `PATH` entry.
+
+For a noninteractive or cloud installation:
+
+```sh
+export GH_TOKEN="..." # token with access to hshankar/mdview
+export MDVIEW_INSTALL_DIR="$HOME/.local/bin"
+gh api repos/hshankar/mdview/contents/install.sh --jq .content \
+  | base64 --decode \
+  | sh
+export PATH="$MDVIEW_INSTALL_DIR:$PATH"
+mdview --version
+```
+
+Pin a release by setting `MDVIEW_VERSION`, for example:
+
+```sh
+MDVIEW_VERSION=0.1.0 MDVIEW_INSTALL_DIR="$HOME/.local/bin" ./install.sh
+```
+
+When the repository is public, the unauthenticated equivalent is:
+
+```sh
+curl -fsSL https://raw.githubusercontent.com/hshankar/mdview/main/install.sh | sh
+```
+
+The command hands the file to a detached viewer process and returns immediately. Later invocations reuse that process and open another window. After the last viewer window closes, the process remains warm for five minutes and then exits automatically. `Command-Q` exits it immediately.
+
+## Build from source
+
+Building requires Swift 5.10 or newer:
 
 ```sh
 swift build -c release
 .build/release/mdview README.md
 ```
 
-Run the test suite with:
+Run tests and install the native-architecture build with:
 
 ```sh
 swift test
-```
-
-## Install
-
-The default installation prefix is `/usr/local`:
-
-```sh
-make install
-```
-
-A user-local installation can be made without `sudo`:
-
-```sh
 make install PREFIX="$HOME/.local"
 ```
 
-Ensure the selected `bin` directory is on `PATH`, then run:
+Build a distributable Intel and Apple silicon archive with:
 
 ```sh
-mdview /path/to/document.md
+scripts/package-release.sh 0.1.0 dist
 ```
 
-The command hands the file to a detached viewer process and returns immediately. Later invocations reuse that process and open another window. After the last viewer window closes, the process remains warm for five minutes and then exits automatically. `Command-Q` exits it immediately.
-
-The installation includes the `mdview_MDView.bundle` resource directory next to the executable. Both are required. Remove them with the same prefix using:
+The installed `mdview` executable and adjacent `mdview_MDView.bundle` resource directory are both required. Remove a source installation with:
 
 ```sh
 make uninstall PREFIX="$HOME/.local"
