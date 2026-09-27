@@ -52,11 +52,13 @@ mdview <file>
 ### 5.2 Required behavior
 
 - Resolve the supplied path to a canonical local file path.
-- Open one viewer window containing the rendered document.
+- Open one viewer window containing the rendered document for each invocation.
 - Use the filename as the window title.
 - Return a clear error for a missing, unreadable, or unsupported file.
 - Do not start a local HTTP server.
-- Keep the process attached to the viewer window and exit when the window is closed.
+- Return the CLI process after handing the file to a detached viewer process.
+- Reuse a warm viewer process for subsequent invocations.
+- Exit the warm process after the final window has been closed and a bounded idle timeout has elapsed.
 
 ### 5.3 Possible future options
 

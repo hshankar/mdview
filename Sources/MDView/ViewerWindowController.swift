@@ -3,6 +3,9 @@ import WebKit
 
 @MainActor
 final class ViewerWindowController: NSWindowController {
+    private static let sharedDataStore = WKWebsiteDataStore.nonPersistent()
+    private static let sharedRenderer = Result { try DocumentRenderer() }
+
     private let fileURL: URL
     private var webView: WKWebView?
     private var renderer: DocumentRenderer?
@@ -64,16 +67,17 @@ final class ViewerWindowController: NSWindowController {
 
     private func installWebViewAndLoadDocument() {
         let configuration = WKWebViewConfiguration()
-        configuration.websiteDataStore = .nonPersistent()
+        configuration.websiteDataStore = Self.sharedDataStore
         configuration.defaultWebpagePreferences.allowsContentJavaScript = true
         configuration.preferences.javaScriptCanOpenWindowsAutomatically = false
 
         let webView = WKWebView(frame: .zero, configuration: configuration)
         webView.navigationDelegate = self
 
-        do {
-            renderer = try DocumentRenderer()
-        } catch {
+        switch Self.sharedRenderer {
+        case let .success(renderer):
+            self.renderer = renderer
+        case let .failure(error):
             presentLoadError(error, closesWindow: true)
             return
         }

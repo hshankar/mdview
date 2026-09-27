@@ -20,6 +20,8 @@ mdview README.md
 - External links open in the default browser
 - Raw HTML is shown as text instead of executed
 - Bundled rendering assets; no CDN or network connection is needed for local files
+- Immediate native window while WebKit initializes in the background
+- A warm viewer process makes subsequent invocations open new windows quickly
 
 ## Requirements
 
@@ -61,6 +63,8 @@ Ensure the selected `bin` directory is on `PATH`, then run:
 mdview /path/to/document.md
 ```
 
+The command hands the file to a detached viewer process and returns immediately. Later invocations reuse that process and open another window. After the last viewer window closes, the process remains warm for five minutes and then exits automatically. `Command-Q` exits it immediately.
+
 The installation includes the `mdview_MDView.bundle` resource directory next to the executable. Both are required. Remove them with the same prefix using:
 
 ```sh
@@ -94,6 +98,6 @@ Remote images explicitly referenced by a document may still be fetched by WebKit
 
 ## Architecture
 
-The native application shell is written in Swift using AppKit and `WKWebView`. Markdown is rendered offline with bundled copies of [Marked](https://github.com/markedjs/marked) and [highlight.js](https://github.com/highlightjs/highlight.js). See [`THIRD_PARTY_NOTICES.md`](THIRD_PARTY_NOTICES.md) for licenses.
+The native application shell is written in Swift using AppKit and `WKWebView`. A per-user Core Foundation message port forwards files from short-lived CLI invocations to the warm viewer process; it does not use a TCP port or HTTP server. Markdown is rendered offline with bundled copies of [Marked](https://github.com/markedjs/marked) and [highlight.js](https://github.com/highlightjs/highlight.js). See [`THIRD_PARTY_NOTICES.md`](THIRD_PARTY_NOTICES.md) for licenses.
 
 Product scope and acceptance criteria are recorded in [`REQUIREMENTS.md`](REQUIREMENTS.md).

@@ -12,6 +12,13 @@ final class ViewerIPCTests: XCTestCase {
         )
     }
 
+    func testOnlyOneServerCanOwnAPortName() throws {
+        let portName = "mdview.tests.owner.\(UUID().uuidString)"
+        let first = try XCTUnwrap(ViewerMessageServer(portName: portName) { _ in })
+        XCTAssertNil(ViewerMessageServer(portName: portName) { _ in })
+        withExtendedLifetime(first) {}
+    }
+
     func testSendsFilePathToRunningServer() throws {
         let received = expectation(description: "server receives path")
         let expectedURL = URL(fileURLWithPath: "/tmp/a document.md").standardizedFileURL

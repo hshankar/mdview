@@ -31,8 +31,13 @@ final class ViewerMessageServer {
     private var port: CFMessagePort?
     private var source: CFRunLoopSource?
     private let openHandler: OpenHandler
+    private let lockDescriptor: Int32
 
     init?(portName: String = defaultPortName, openHandler: @escaping OpenHandler) {
+        guard let lockDescriptor = Self.acquireLock(for: portName) else {
+            return nil
+        }
+        self.lockDescriptor = lockDescriptor
         self.openHandler = openHandler
 
         var context = CFMessagePortContext(
@@ -68,6 +73,34 @@ final class ViewerMessageServer {
         if let source {
             CFRunLoopRemoveSource(CFRunLoopGetMain(), source, .commonModes)
         }
+        flock(lockDescriptor, LOCK_UN)
+        close(lockDescriptor)
+    }
+
+    private static func acquireLock(for portName: String) -> Int32? {
+        var hash: UInt64 = 14_695_981_039_346_656_037
+        for byte in portName.utf8 {
+            hash ^= UInt64(byte)
+            hash &*= 1_099_511_628_211
+        }
+
+        let baseDirectory = FileManager.default.urls(
+            for: .cachesDirectory,
+            in: .userDomainMask
+        ).first ?? FileManager.default.temporaryDirectory
+        let directory = baseDirectory.appendingPathComponent("mdview", isDirectory: true)
+        try? FileManager.default.createDirectory(
+            at: directory,
+            withIntermediateDirectories: true
+        )
+        let lockURL = directory.appendingPathComponent("message-port-\(hash).lock")
+        let descriptor = open(lockURL.path, O_CREAT | O_RDWR, S_IRUSR | S_IWUSR)
+        guard descriptor >= 0 else { return nil }
+        guard flock(descriptor, LOCK_EX | LOCK_NB) == 0 else {
+            close(descriptor)
+            return nil
+        }
+        return descriptor
     }
 
     fileprivate func receive(path: String) {
@@ -102,11 +135,10 @@ enum ViewerMessageClient {
 }
 
 enum ViewerServerLauncher {
-    static func launch(opening fileURL: URL, executablePath: String = CommandLine.arguments[0]) throws {
-        let executableURL = URL(
-            fileURLWithPath: executablePath,
-            relativeTo: URL(fileURLWithPath: FileManager.default.currentDirectoryPath)
-        ).standardizedFileURL
+    static func launch(opening fileURL: URL, executableURL: URL? = nil) throws {
+        let executableURL = executableURL
+            ?? Bundle.main.executableURL
+            ?? URL(fileURLWithPath: CommandLine.arguments[0]).standardizedFileURL
 
         let process = Process()
         process.executableURL = executableURL
