@@ -14,6 +14,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
     }
 
     func applicationDidFinishLaunching(_ notification: Notification) {
+        ApplicationIcon.install(on: NSApplication.shared)
+
         guard claimServerPort() else {
             NSApplication.shared.terminate(nil)
             return

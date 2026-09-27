@@ -29,7 +29,6 @@ struct MDViewApp {
 
     private static func runApplication(opening fileURL: URL) {
         let application = NSApplication.shared
-        ApplicationIcon.install(on: application)
         let delegate = AppDelegate(fileURL: fileURL)
         application.delegate = delegate
         application.setActivationPolicy(.regular)
