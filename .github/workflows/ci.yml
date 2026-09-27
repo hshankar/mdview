@@ -48,3 +48,39 @@ jobs:
           ./install.sh
           "$MDVIEW_INSTALL_DIR/mdview" --version
           test -d "$MDVIEW_INSTALL_DIR/mdview_MDView.bundle"
+
+      - name: Save universal package for Intel test
+        uses: actions/upload-artifact@v4
+        with:
+          name: mdview-universal-package
+          path: |
+            dist/mdview-0.1.0-ci-macos-universal.tar.gz
+            dist/mdview-0.1.0-ci-macos-universal.tar.gz.sha256
+          if-no-files-found: error
+          retention-days: 1
+
+  intel-install-smoke-test:
+    needs: test-and-package
+    runs-on: macos-13
+    timeout-minutes: 10
+
+    steps:
+      - name: Check out installer
+        uses: actions/checkout@v5
+
+      - name: Download universal package
+        uses: actions/download-artifact@v4
+        with:
+          name: mdview-universal-package
+          path: dist
+
+      - name: Install and execute Intel slice
+        env:
+          MDVIEW_ARCHIVE: ${{ github.workspace }}/dist/mdview-0.1.0-ci-macos-universal.tar.gz
+          MDVIEW_CHECKSUM_FILE: ${{ github.workspace }}/dist/mdview-0.1.0-ci-macos-universal.tar.gz.sha256
+          MDVIEW_INSTALL_DIR: ${{ runner.temp }}/mdview-bin
+        run: |
+          test "$(uname -m)" = x86_64
+          ./install.sh
+          "$MDVIEW_INSTALL_DIR/mdview" --version
+          test -d "$MDVIEW_INSTALL_DIR/mdview_MDView.bundle"
