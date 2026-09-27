@@ -88,6 +88,7 @@ tar -xzf "$ARCHIVE" -C "$TEMP_DIR"
 PACKAGE_DIR=$(find "$TEMP_DIR" -maxdepth 1 -type d -name 'mdview-*-macos-universal' | head -1)
 [ -n "$PACKAGE_DIR" ] || fail "release archive has an unexpected layout"
 [ -x "$PACKAGE_DIR/mdview" ] || fail "release archive does not contain mdview"
+[ -x "$PACKAGE_DIR/mdview-update" ] || fail "release archive is missing the update helper"
 [ -d "$PACKAGE_DIR/mdview_MDView.bundle" ] || fail "release archive is missing resources"
 
 ARCHS=$(lipo -archs "$PACKAGE_DIR/mdview")
@@ -108,12 +109,20 @@ mkdir -p "$INSTALL_DIR" || fail "cannot create installation directory: $INSTALL_
 [ -w "$INSTALL_DIR" ] || fail "$INSTALL_DIR is not writable; set MDVIEW_INSTALL_DIR"
 
 NEW_BINARY="$INSTALL_DIR/.mdview-new-$$"
+NEW_UPDATER="$INSTALL_DIR/.mdview-update-new-$$"
 NEW_BUNDLE="$INSTALL_DIR/.mdview_MDView.bundle-new-$$"
-rm -rf "$NEW_BINARY" "$NEW_BUNDLE"
+rm -rf "$NEW_BINARY" "$NEW_UPDATER" "$NEW_BUNDLE"
 install -m 0755 "$PACKAGE_DIR/mdview" "$NEW_BINARY"
+install -m 0755 "$PACKAGE_DIR/mdview-update" "$NEW_UPDATER"
 cp -R "$PACKAGE_DIR/mdview_MDView.bundle" "$NEW_BUNDLE"
+
+# A warm viewer runs as `mdview --server`; stop it so the next document opens
+# with the replacement binary and resources. The bracketed expression keeps
+# pkill from matching this installer process.
+pkill -f '[m]dview --server' 2>/dev/null || true
 rm -rf "$INSTALL_DIR/mdview_MDView.bundle"
 mv "$NEW_BUNDLE" "$INSTALL_DIR/mdview_MDView.bundle"
+mv "$NEW_UPDATER" "$INSTALL_DIR/mdview-update"
 mv "$NEW_BINARY" "$INSTALL_DIR/mdview"
 
 "$INSTALL_DIR/mdview" --version
