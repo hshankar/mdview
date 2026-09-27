@@ -22,6 +22,7 @@ final class CLITests: XCTestCase {
     func testParsesHelpAndVersion() throws {
         XCTAssertEqual(try CLI.parse(arguments: ["--help"]), .help)
         XCTAssertEqual(try CLI.parse(arguments: ["-v"]), .version)
+        XCTAssertEqual(try CLI.parse(arguments: ["update"]), .update)
     }
 
     func testRejectsMissingArgument() {
