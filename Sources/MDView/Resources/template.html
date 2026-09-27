@@ -1,0 +1,70 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="light dark">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'none'; img-src file: data: http: https:; media-src file: data: http: https:; style-src 'unsafe-inline'; script-src 'unsafe-inline'; connect-src 'none'; object-src 'none'; frame-src 'none'; base-uri 'none'; form-action 'none'">
+  <style>{{DOCUMENT_STYLE}}</style>
+</head>
+<body>
+  <main id="document" class="markdown-body" aria-label="Markdown document"></main>
+  <noscript>JavaScript is required to render this Markdown document.</noscript>
+  <script>{{MARKED_SCRIPT}}</script>
+  <script>{{HIGHLIGHT_SCRIPT}}</script>
+  <script>
+    (() => {
+      "use strict";
+
+      const escapeHTML = (value) => value
+        .replaceAll("&", "&amp;")
+        .replaceAll("<", "&lt;")
+        .replaceAll(">", "&gt;")
+        .replaceAll('"', "&quot;")
+        .replaceAll("'", "&#39;");
+
+      const seenHeadingIDs = new Map();
+      const headingID = (text) => {
+        const base = text
+          .toLocaleLowerCase()
+          .replace(/<[^>]*>/g, "")
+          .replace(/[^\p{Letter}\p{Number}\s-]/gu, "")
+          .trim()
+          .replace(/\s+/g, "-") || "section";
+        const count = seenHeadingIDs.get(base) || 0;
+        seenHeadingIDs.set(base, count + 1);
+        return count === 0 ? base : `${base}-${count}`;
+      };
+
+      marked.use({
+        gfm: true,
+        breaks: false,
+        renderer: {
+          // Raw HTML is displayed as text. Markdown documents are untrusted input.
+          html({ text }) {
+            return escapeHTML(text);
+          },
+          heading({ tokens, depth }) {
+            const text = this.parser.parseInline(tokens);
+            return `<h${depth} id="${headingID(text)}">${text}</h${depth}>`;
+          }
+        }
+      });
+
+      const encodedMarkdown = "{{MARKDOWN_BASE64}}";
+      const bytes = Uint8Array.from(atob(encodedMarkdown), character => character.charCodeAt(0));
+      const markdown = new TextDecoder("utf-8").decode(bytes);
+      const documentElement = document.getElementById("document");
+      documentElement.innerHTML = marked.parse(markdown);
+
+      documentElement.querySelectorAll("pre code").forEach((block) => {
+        try {
+          hljs.highlightElement(block);
+        } catch (error) {
+          console.debug("Could not highlight code block", error);
+        }
+      });
+    })();
+  </script>
+</body>
+</html>

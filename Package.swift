@@ -11,7 +11,10 @@ let package = Package(
         .executable(name: "mdview", targets: ["MDView"])
     ],
     targets: [
-        .executableTarget(name: "MDView"),
+        .executableTarget(
+            name: "MDView",
+            resources: [.process("Resources")]
+        ),
         .testTarget(name: "MDViewTests", dependencies: ["MDView"])
     ]
 )

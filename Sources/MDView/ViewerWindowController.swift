@@ -5,6 +5,7 @@ import WebKit
 final class ViewerWindowController: NSWindowController {
     private let fileURL: URL
     private let webView: WKWebView
+    private let renderer: DocumentRenderer
 
     init(fileURL: URL) {
         self.fileURL = fileURL
@@ -13,6 +14,12 @@ final class ViewerWindowController: NSWindowController {
         configuration.websiteDataStore = .nonPersistent()
         configuration.defaultWebpagePreferences.allowsContentJavaScript = true
         webView = WKWebView(frame: .zero, configuration: configuration)
+
+        do {
+            renderer = try DocumentRenderer()
+        } catch {
+            fatalError("Could not initialize the document renderer: \(error.localizedDescription)")
+        }
 
         let window = NSWindow(
             contentRect: NSRect(x: 0, y: 0, width: 920, height: 760),
@@ -37,25 +44,7 @@ final class ViewerWindowController: NSWindowController {
     private func loadFile() {
         do {
             let contents = try String(contentsOf: fileURL, encoding: .utf8)
-            let escapedContents = contents
-                .replacingOccurrences(of: "&", with: "&amp;")
-                .replacingOccurrences(of: "<", with: "&lt;")
-                .replacingOccurrences(of: ">", with: "&gt;")
-
-            let html = """
-            <!doctype html>
-            <html>
-              <head>
-                <meta charset="utf-8">
-                <meta name="color-scheme" content="light dark">
-                <style>
-                  body { margin: 0; padding: 40px; font: 15px ui-monospace, monospace; }
-                  pre { max-width: 960px; margin: 0 auto; white-space: pre-wrap; overflow-wrap: anywhere; }
-                </style>
-              </head>
-              <body><pre>\(escapedContents)</pre></body>
-            </html>
-            """
+            let html = renderer.render(markdown: contents)
             webView.loadHTMLString(html, baseURL: fileURL.deletingLastPathComponent())
         } catch {
             presentLoadError(error)

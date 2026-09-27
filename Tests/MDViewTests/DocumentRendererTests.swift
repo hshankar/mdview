@@ -1,0 +1,26 @@
+import Foundation
+import XCTest
+@testable import MDView
+
+final class DocumentRendererTests: XCTestCase {
+    func testEmbedsMarkdownAsBase64InsteadOfExecutableMarkup() throws {
+        let markdown = "# Hello\n<script>alert('no')</script>"
+        let html = try DocumentRenderer().render(markdown: markdown)
+
+        XCTAssertFalse(html.contains(markdown))
+        XCTAssertTrue(html.contains(Data(markdown.utf8).base64EncodedString()))
+        XCTAssertTrue(html.contains("Raw HTML is displayed as text"))
+    }
+
+    func testBuildsCompleteOfflineDocument() throws {
+        let html = try DocumentRenderer().render(markdown: "```swift\nprint(1)\n```")
+
+        XCTAssertTrue(html.hasPrefix("<!doctype html>"))
+        XCTAssertTrue(html.contains("Content-Security-Policy"))
+        XCTAssertTrue(html.contains("marked v18.0.14"))
+        XCTAssertTrue(html.contains("hljs.highlightElement"))
+        XCTAssertTrue(html.contains("prefers-color-scheme: dark"))
+        XCTAssertFalse(html.contains("{{DOCUMENT_STYLE}}"))
+        XCTAssertFalse(html.contains("{{MARKDOWN_BASE64}}"))
+    }
+}
