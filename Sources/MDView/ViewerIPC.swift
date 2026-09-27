@@ -25,7 +25,7 @@ final class ViewerMessageServer {
     typealias OpenHandler = (URL) -> Void
 
     static var defaultPortName: String {
-        "app.mdview.ipc.mdview.\(getuid())"
+        "app.mdview.ipc.\(getuid())"
     }
 
     private var port: CFMessagePort?
