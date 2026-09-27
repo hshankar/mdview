@@ -107,7 +107,7 @@ make install PREFIX="$HOME/.local"
 Build a distributable Intel and Apple silicon archive with:
 
 ```sh
-scripts/package-release.sh 0.1.1 dist
+scripts/package-release.sh 0.1.2 dist
 ```
 
 The installed `mdview` executable and adjacent `mdview_MDView.bundle` resource directory are both required. Remove a source installation with:

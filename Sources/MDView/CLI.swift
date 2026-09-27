@@ -32,7 +32,7 @@ enum CLIError: LocalizedError, Equatable {
 }
 
 enum CLI {
-    static let version = "0.1.1"
+    static let version = "0.1.2"
 
     static let usage = """
     Usage: mdview <file>
