@@ -29,16 +29,34 @@ final class ViewerWindowController: NSWindowController {
         )
         window.title = fileURL.lastPathComponent
         window.contentView = webView
+        window.initialFirstResponder = webView
         window.center()
         window.setFrameAutosaveName("mdview.viewer")
 
         super.init(window: window)
+        webView.navigationDelegate = self
         loadFile()
     }
 
     @available(*, unavailable)
     required init?(coder: NSCoder) {
         fatalError("init(coder:) has not been implemented")
+    }
+
+    func reload() {
+        loadFile()
+    }
+
+    func zoomIn() {
+        webView.pageZoom = min(webView.pageZoom * 1.1, 3.0)
+    }
+
+    func zoomOut() {
+        webView.pageZoom = max(webView.pageZoom / 1.1, 0.5)
+    }
+
+    func resetZoom() {
+        webView.pageZoom = 1.0
     }
 
     private func loadFile() {
@@ -56,5 +74,30 @@ final class ViewerWindowController: NSWindowController {
         alert.messageText = "Could not open \(fileURL.lastPathComponent)"
         alert.runModal()
         close()
+    }
+}
+
+extension ViewerWindowController: WKNavigationDelegate {
+    func webView(
+        _ webView: WKWebView,
+        decidePolicyFor navigationAction: WKNavigationAction,
+        decisionHandler: @escaping (WKNavigationActionPolicy) -> Void
+    ) {
+        guard navigationAction.navigationType == .linkActivated,
+              let url = navigationAction.request.url else {
+            decisionHandler(.allow)
+            return
+        }
+
+        switch LinkPolicy.disposition(for: url) {
+        case .allowInViewer:
+            decisionHandler(.allow)
+        case .openExternally:
+            NSWorkspace.shared.open(url)
+            decisionHandler(.cancel)
+        case .deny:
+            NSSound.beep()
+            decisionHandler(.cancel)
+        }
     }
 }
