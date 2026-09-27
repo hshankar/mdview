@@ -119,6 +119,7 @@ Local raster images should be supported. SVG support is desirable.
 - Provide coordinated light and dark color schemes.
 - Follow the macOS appearance by default and update when the system appearance changes.
 - Avoid permanent toolbars, sidebars, or controls in the MVP.
+- Provide a distinctive, high-resolution application icon for the Dock and minimized windows.
 - Provide a print-friendly layout where practical.
 
 ## 8. Syntax highlighting

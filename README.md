@@ -22,6 +22,7 @@ mdview README.md
 - Bundled rendering assets; no CDN or network connection is needed for local files
 - Immediate native window while WebKit initializes in the background
 - A warm viewer process makes subsequent invocations open new windows quickly
+- Custom Dock and minimized-window icon
 
 ## Requirements
 
@@ -106,7 +107,7 @@ make install PREFIX="$HOME/.local"
 Build a distributable Intel and Apple silicon archive with:
 
 ```sh
-scripts/package-release.sh 0.1.0 dist
+scripts/package-release.sh 0.1.1 dist
 ```
 
 The installed `mdview` executable and adjacent `mdview_MDView.bundle` resource directory are both required. Remove a source installation with:

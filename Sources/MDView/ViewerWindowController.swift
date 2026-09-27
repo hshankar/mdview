@@ -23,6 +23,7 @@ final class ViewerWindowController: NSWindowController {
             defer: false
         )
         window.title = fileURL.lastPathComponent
+        window.miniwindowImage = ApplicationIcon.image()
         window.contentView = Self.makeLoadingView(filename: fileURL.lastPathComponent)
         window.center()
         window.setFrameAutosaveName("mdview.viewer")

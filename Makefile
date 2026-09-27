@@ -3,13 +3,16 @@ DESTDIR ?=
 CONFIGURATION ?= release
 VERSION ?= 0.1.0
 
-.PHONY: build test package install uninstall clean
+.PHONY: build test icon package install uninstall clean
 
 build:
 	swift build -c $(CONFIGURATION)
 
 test:
 	swift test
+
+icon:
+	./scripts/generate-icon.py
 
 package:
 	./scripts/package-release.sh "$(VERSION)" dist
