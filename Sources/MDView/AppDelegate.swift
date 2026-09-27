@@ -16,6 +16,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         viewerWindowController = controller
         controller.showWindow(nil)
         NSApplication.shared.activate(ignoringOtherApps: true)
+        controller.beginLoading()
     }
 
     func applicationShouldTerminateAfterLastWindowClosed(_ sender: NSApplication) -> Bool {
