@@ -1,14 +1,18 @@
 PREFIX ?= /usr/local
 DESTDIR ?=
 CONFIGURATION ?= release
+VERSION ?= 0.1.0
 
-.PHONY: build test install uninstall clean
+.PHONY: build test package install uninstall clean
 
 build:
 	swift build -c $(CONFIGURATION)
 
 test:
 	swift test
+
+package:
+	./scripts/package-release.sh "$(VERSION)" dist
 
 install: build
 	@bin_path="$$(swift build -c $(CONFIGURATION) --show-bin-path)"; \
