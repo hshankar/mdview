@@ -17,8 +17,6 @@ struct MDViewApp {
                 }
             case let .serve(fileURL):
                 runApplication(opening: fileURL)
-            case .update:
-                try UpdateCommand.run()
             }
         } catch {
             let message = "mdview: \(error.localizedDescription)\n"

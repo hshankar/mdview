@@ -3,7 +3,6 @@ import Foundation
 enum LaunchRequest: Equatable {
     case view(URL)
     case serve(URL)
-    case update
     case help
     case version
 }
@@ -40,7 +39,6 @@ enum CLI {
     Options:
       -h, --help       Show this help
       -v, --version    Show the version
-      update           Install the latest release
     """
 
     static func parse(
@@ -49,13 +47,6 @@ enum CLI {
     ) throws -> LaunchRequest {
         guard let argument = arguments.first else {
             throw CLIError.missingFile
-        }
-
-        if argument == "update" {
-            guard arguments.count == 1 else {
-                throw CLIError.tooManyArguments
-            }
-            return .update
         }
 
         if argument == "--server" {

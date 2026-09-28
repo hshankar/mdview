@@ -15,36 +15,11 @@ concurrency:
 jobs:
   release:
     runs-on: macos-15
-    timeout-minutes: 25
+    timeout-minutes: 20
 
     steps:
       - name: Check out repository
         uses: actions/checkout@v5
-
-      - name: Configure Developer ID signing
-        env:
-          APPLE_CERTIFICATE_BASE64: ${{ secrets.APPLE_CERTIFICATE_BASE64 }}
-          APPLE_CERTIFICATE_PASSWORD: ${{ secrets.APPLE_CERTIFICATE_PASSWORD }}
-          KEYCHAIN_PASSWORD: ${{ secrets.KEYCHAIN_PASSWORD }}
-          DEVELOPER_ID_APPLICATION: ${{ secrets.DEVELOPER_ID_APPLICATION }}
-        run: |
-          test -n "$APPLE_CERTIFICATE_BASE64"
-          test -n "$APPLE_CERTIFICATE_PASSWORD"
-          test -n "$KEYCHAIN_PASSWORD"
-          test -n "$DEVELOPER_ID_APPLICATION"
-          certificate_path="$RUNNER_TEMP/developer-id.p12"
-          keychain_path="$RUNNER_TEMP/mdview-signing.keychain-db"
-          echo "$APPLE_CERTIFICATE_BASE64" | base64 --decode > "$certificate_path"
-          security create-keychain -p "$KEYCHAIN_PASSWORD" "$keychain_path"
-          security set-keychain-settings -lut 21600 "$keychain_path"
-          security unlock-keychain -p "$KEYCHAIN_PASSWORD" "$keychain_path"
-          security import "$certificate_path" -k "$keychain_path" \
-            -P "$APPLE_CERTIFICATE_PASSWORD" -T /usr/bin/codesign
-          security set-key-partition-list -S apple-tool:,apple: -s \
-            -k "$KEYCHAIN_PASSWORD" "$keychain_path"
-          security list-keychain -d user -s "$keychain_path"
-          security default-keychain -d user -s "$keychain_path"
-          echo "MDVIEW_SIGNING_IDENTITY=$DEVELOPER_ID_APPLICATION" >> "$GITHUB_ENV"
 
       - name: Validate version
         run: |
@@ -54,68 +29,19 @@ jobs:
       - name: Run tests
         run: swift test
 
-      - name: Build universal release package
+      - name: Build universal binary from source
         run: |
-          version="${GITHUB_REF_NAME#v}"
-          scripts/package-release.sh "$version" dist
+          swift build -c release --arch arm64 --arch x86_64
+          bin_path="$(swift build -c release --arch arm64 --arch x86_64 --show-bin-path)"
+          lipo -archs "$bin_path/mdview" | grep -q arm64
+          lipo -archs "$bin_path/mdview" | grep -q x86_64
 
-      - name: Notarize release
-        env:
-          APPLE_API_KEY_BASE64: ${{ secrets.APPLE_API_KEY_BASE64 }}
-          APPLE_API_KEY_ID: ${{ secrets.APPLE_API_KEY_ID }}
-          APPLE_API_ISSUER_ID: ${{ secrets.APPLE_API_ISSUER_ID }}
-        run: |
-          test -n "$APPLE_API_KEY_BASE64"
-          test -n "$APPLE_API_KEY_ID"
-          test -n "$APPLE_API_ISSUER_ID"
-          version="${GITHUB_REF_NAME#v}"
-          api_key="$RUNNER_TEMP/AuthKey_$APPLE_API_KEY_ID.p8"
-          archive_root="$RUNNER_TEMP/notarization"
-          echo "$APPLE_API_KEY_BASE64" | base64 --decode > "$api_key"
-          mkdir -p "$archive_root"
-          tar -xzf "dist/mdview-$version-macos-universal.tar.gz" -C "$archive_root"
-          ditto -c -k --keepParent \
-            "$archive_root/mdview-$version-macos-universal" \
-            "$RUNNER_TEMP/mdview-$version-macos-universal.zip"
-          xcrun notarytool submit "$RUNNER_TEMP/mdview-$version-macos-universal.zip" \
-            --key "$api_key" \
-            --key-id "$APPLE_API_KEY_ID" \
-            --issuer "$APPLE_API_ISSUER_ID" \
-            --wait
-
-      - name: Prepare stable asset names
-        run: |
-          version="${GITHUB_REF_NAME#v}"
-          cp "dist/mdview-$version-macos-universal.tar.gz" \
-             dist/mdview-macos-universal.tar.gz
-          (
-            cd dist
-            shasum -a 256 mdview-macos-universal.tar.gz \
-              > mdview-macos-universal.tar.gz.sha256
-          )
-
-      - name: Verify package
-        run: |
-          version="${GITHUB_REF_NAME#v}"
-          rm -rf "$RUNNER_TEMP/package"
-          mkdir -p "$RUNNER_TEMP/package"
-          tar -xzf "dist/mdview-$version-macos-universal.tar.gz" \
-            -C "$RUNNER_TEMP/package"
-          binary="$RUNNER_TEMP/package/mdview-$version-macos-universal/mdview"
-          lipo -archs "$binary" | grep -q arm64
-          lipo -archs "$binary" | grep -q x86_64
-          codesign --verify --verbose "$binary"
-
-      - name: Create GitHub release
+      - name: Create source release
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
           version="${GITHUB_REF_NAME#v}"
           gh release create "$GITHUB_REF_NAME" \
-            "dist/mdview-$version-macos-universal.tar.gz" \
-            "dist/mdview-$version-macos-universal.tar.gz.sha256" \
-            dist/mdview-macos-universal.tar.gz \
-            dist/mdview-macos-universal.tar.gz.sha256 \
             --verify-tag \
             --generate-notes \
             --title "mdview $version"
