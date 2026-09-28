@@ -1,6 +1,6 @@
-# mdview
+# mdview — native Markdown viewer for macOS
 
-A small, read-only Markdown viewer for macOS.
+A fast, read-only Markdown viewer for local files on macOS. Launch it from the command line for live reload, native document search, and a collapsible outline—without Electron or a browser server.
 
 ```sh
 mdview README.md
@@ -102,6 +102,10 @@ Remote images and media are blocked. Local rendering libraries, styles, and rela
 The native application shell is written in Swift using AppKit and `WKWebView`. A per-user Core Foundation message port forwards files from short-lived CLI invocations to the warm viewer process; it does not use a TCP port or HTTP server. Markdown is rendered offline with bundled copies of [Marked](https://github.com/markedjs/marked) and [highlight.js](https://github.com/highlightjs/highlight.js). See [`THIRD_PARTY_NOTICES.md`](THIRD_PARTY_NOTICES.md) for licenses.
 
 Product scope and acceptance criteria are recorded in [`REQUIREMENTS.md`](REQUIREMENTS.md).
+
+## Security
+
+Report vulnerabilities through the process in [SECURITY.md](SECURITY.md).
 
 ## License
 
