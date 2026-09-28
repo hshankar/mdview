@@ -17,6 +17,8 @@ final class DocumentRendererTests: XCTestCase {
 
         XCTAssertTrue(html.hasPrefix("<!doctype html>"))
         XCTAssertTrue(html.contains("Content-Security-Policy"))
+        XCTAssertTrue(html.contains("img-src file: data:"))
+        XCTAssertFalse(html.contains("img-src file: data: http: https:"))
         XCTAssertTrue(html.contains("marked v18.0.14"))
         XCTAssertTrue(html.contains("hljs.highlightElement"))
         XCTAssertTrue(html.contains("prefers-color-scheme: dark"))

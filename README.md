@@ -145,7 +145,7 @@ Documents are treated as untrusted input:
 - User-activated HTTP and HTTPS links are handed to the default browser.
 - Other top-level navigation is denied.
 
-Remote images explicitly referenced by a document may still be fetched by WebKit. Local rendering libraries and styles are always loaded from the bundled resources.
+Remote images and media are blocked. Local rendering libraries, styles, and relative document resources are always loaded from bundled or local files.
 
 ## Architecture
 
