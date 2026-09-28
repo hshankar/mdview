@@ -11,12 +11,17 @@ final class ViewerWindowController: NSWindowController {
     private var renderer: DocumentRenderer?
     private var fileWatcher: FileWatcher?
     private var pendingScrollPosition: Double?
+    private var findBar: NSView?
+    private var findBarHeightConstraint: NSLayoutConstraint?
+    private var findField: NSSearchField?
+    private var findStatusLabel: NSTextField?
+    private var findGeneration = 0
     private var hasBegunLoading = false
 
     init(fileURL: URL) {
         self.fileURL = fileURL
 
-        let window = NSWindow(
+        let window = ViewerWindow(
             contentRect: NSRect(x: 0, y: 0, width: 920, height: 760),
             styleMask: [.titled, .closable, .miniaturizable, .resizable],
             backing: .buffered,
@@ -29,6 +34,10 @@ final class ViewerWindowController: NSWindowController {
         window.setFrameAutosaveName("mdview.viewer")
 
         super.init(window: window)
+
+        window.commandKeyHandler = { [weak self] event in
+            self?.handleCommandKeyEquivalent(event) ?? false
+        }
     }
 
     @available(*, unavailable)
@@ -66,6 +75,43 @@ final class ViewerWindowController: NSWindowController {
         webView?.pageZoom = 1.0
     }
 
+    private func handleCommandKeyEquivalent(_ event: NSEvent) -> Bool {
+        let modifiers = event.modifierFlags.intersection(.deviceIndependentFlagsMask)
+        guard modifiers == [.command] || modifiers == [.command, .shift],
+              let character = event.charactersIgnoringModifiers?.lowercased() else {
+            return false
+        }
+
+        switch (character, modifiers) {
+        case ("f", [.command]):
+            showFind()
+        case ("g", [.command]):
+            findNext()
+        case ("g", [.command, .shift]):
+            findPrevious()
+        default:
+            return false
+        }
+        return true
+    }
+
+    func showFind() {
+        guard let window, let findBar, let findBarHeightConstraint, let findField else { return }
+        findBar.isHidden = false
+        findBarHeightConstraint.constant = 42
+        window.contentView?.layoutSubtreeIfNeeded()
+        window.makeFirstResponder(findField)
+        findField.selectText(nil)
+    }
+
+    func findNext() {
+        find(backwards: false)
+    }
+
+    func findPrevious() {
+        find(backwards: true)
+    }
+
     private func installWebViewAndLoadDocument() {
         let configuration = WKWebViewConfiguration()
         configuration.websiteDataStore = Self.sharedDataStore
@@ -84,7 +130,7 @@ final class ViewerWindowController: NSWindowController {
         }
 
         self.webView = webView
-        window?.contentView = webView
+        installContentView(containing: webView)
         window?.initialFirstResponder = webView
         window?.makeFirstResponder(webView)
 
@@ -122,6 +168,136 @@ final class ViewerWindowController: NSWindowController {
         webView.evaluateJavaScript("window.scrollY") { value, _ in
             load((value as? NSNumber)?.doubleValue)
         }
+    }
+
+    private func installContentView(containing webView: WKWebView) {
+        guard let window else { return }
+
+        let container = NSView()
+        let findBar = NSVisualEffectView()
+        findBar.material = .headerView
+        findBar.blendingMode = .withinWindow
+        findBar.state = .active
+        findBar.isHidden = true
+
+        let findField = NSSearchField()
+        findField.placeholderString = "Find"
+        findField.delegate = self
+        findField.target = self
+        findField.action = #selector(findFieldDidSubmit(_:))
+        findField.setAccessibilityLabel("Find in document")
+
+        let statusLabel = NSTextField(labelWithString: "")
+        statusLabel.textColor = .secondaryLabelColor
+        statusLabel.alignment = .right
+        statusLabel.setContentHuggingPriority(.required, for: .horizontal)
+        statusLabel.setAccessibilityLabel("Find result")
+
+        let previousButton = NSButton(
+            title: "Previous",
+            target: self,
+            action: #selector(findPreviousButtonPressed(_:))
+        )
+        previousButton.toolTip = "Find Previous (Shift-Command-G)"
+        previousButton.setAccessibilityLabel("Find previous")
+
+        let nextButton = NSButton(
+            title: "Next",
+            target: self,
+            action: #selector(findNextButtonPressed(_:))
+        )
+        nextButton.toolTip = "Find Next (Command-G)"
+        nextButton.setAccessibilityLabel("Find next")
+
+        let doneButton = NSButton(
+            title: "Done",
+            target: self,
+            action: #selector(closeFindBar(_:))
+        )
+        doneButton.keyEquivalent = "\u{1b}"
+        doneButton.setAccessibilityLabel("Close find bar")
+
+        let controls = NSStackView(views: [findField, statusLabel, previousButton, nextButton, doneButton])
+        controls.orientation = .horizontal
+        controls.alignment = .centerY
+        controls.spacing = 8
+
+        [webView, findBar, controls].forEach { $0.translatesAutoresizingMaskIntoConstraints = false }
+        container.addSubview(webView)
+        container.addSubview(findBar)
+        findBar.addSubview(controls)
+
+        let findBarHeightConstraint = findBar.heightAnchor.constraint(equalToConstant: 0)
+        NSLayoutConstraint.activate([
+            findBar.topAnchor.constraint(equalTo: container.topAnchor),
+            findBar.leadingAnchor.constraint(equalTo: container.leadingAnchor),
+            findBar.trailingAnchor.constraint(equalTo: container.trailingAnchor),
+            findBarHeightConstraint,
+
+            controls.centerYAnchor.constraint(equalTo: findBar.centerYAnchor),
+            controls.trailingAnchor.constraint(equalTo: findBar.trailingAnchor, constant: -12),
+            controls.leadingAnchor.constraint(greaterThanOrEqualTo: findBar.leadingAnchor, constant: 12),
+            findField.widthAnchor.constraint(equalToConstant: 240),
+
+            webView.topAnchor.constraint(equalTo: findBar.bottomAnchor),
+            webView.leadingAnchor.constraint(equalTo: container.leadingAnchor),
+            webView.trailingAnchor.constraint(equalTo: container.trailingAnchor),
+            webView.bottomAnchor.constraint(equalTo: container.bottomAnchor)
+        ])
+
+        self.findBar = findBar
+        self.findBarHeightConstraint = findBarHeightConstraint
+        self.findField = findField
+        findStatusLabel = statusLabel
+        window.contentView = container
+    }
+
+    private func find(backwards: Bool) {
+        guard let webView, let findField else { return }
+        let query = findField.stringValue
+        guard !query.isEmpty else {
+            showFind()
+            return
+        }
+
+        let configuration = WKFindConfiguration()
+        configuration.backwards = backwards
+        configuration.caseSensitive = false
+        configuration.wraps = true
+
+        findGeneration += 1
+        let generation = findGeneration
+        webView.find(query, configuration: configuration) { [weak self] result in
+            guard let self,
+                  generation == self.findGeneration,
+                  query == self.findField?.stringValue else { return }
+            self.findStatusLabel?.stringValue = result.matchFound ? "" : "No matches"
+        }
+    }
+
+    private func clearFindSelection() {
+        findGeneration += 1
+        findStatusLabel?.stringValue = ""
+        webView?.evaluateJavaScript("window.getSelection().removeAllRanges()")
+    }
+
+    @objc private func findFieldDidSubmit(_ sender: NSSearchField) {
+        findNext()
+    }
+
+    @objc private func findNextButtonPressed(_ sender: Any?) {
+        findNext()
+    }
+
+    @objc private func findPreviousButtonPressed(_ sender: Any?) {
+        findPrevious()
+    }
+
+    @objc private func closeFindBar(_ sender: Any?) {
+        guard let window, let findBar, let findBarHeightConstraint else { return }
+        findBarHeightConstraint.constant = 0
+        findBar.isHidden = true
+        window.makeFirstResponder(webView)
     }
 
     private func startWatchingFile() {
@@ -196,8 +372,34 @@ extension ViewerWindowController: WKNavigationDelegate {
     }
 
     func webView(_ webView: WKWebView, didFinish navigation: WKNavigation!) {
-        guard let scrollPosition = pendingScrollPosition else { return }
-        pendingScrollPosition = nil
-        webView.evaluateJavaScript("window.scrollTo(0, \(scrollPosition))")
+        if let scrollPosition = pendingScrollPosition {
+            pendingScrollPosition = nil
+            webView.evaluateJavaScript("window.scrollTo(0, \(scrollPosition))")
+        }
+
+        if findBar?.isHidden == false, findField?.stringValue.isEmpty == false {
+            find(backwards: false)
+        }
+    }
+}
+
+extension ViewerWindowController: NSSearchFieldDelegate {
+    func controlTextDidChange(_ notification: Notification) {
+        guard let findField else { return }
+        if findField.stringValue.isEmpty {
+            clearFindSelection()
+        } else {
+            find(backwards: false)
+        }
+    }
+
+    func control(
+        _ control: NSControl,
+        textView: NSTextView,
+        doCommandBy commandSelector: Selector
+    ) -> Bool {
+        guard commandSelector == #selector(NSResponder.cancelOperation(_:)) else { return false }
+        closeFindBar(nil)
+        return true
     }
 }

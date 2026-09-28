@@ -59,6 +59,18 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
         activeViewer?.resetZoom()
     }
 
+    @objc func showFind(_ sender: Any?) {
+        activeViewer?.showFind()
+    }
+
+    @objc func findNext(_ sender: Any?) {
+        activeViewer?.findNext()
+    }
+
+    @objc func findPrevious(_ sender: Any?) {
+        activeViewer?.findPrevious()
+    }
+
     private var activeViewer: ViewerWindowController? {
         if let controller = NSApplication.shared.keyWindow?.windowController as? ViewerWindowController {
             return controller

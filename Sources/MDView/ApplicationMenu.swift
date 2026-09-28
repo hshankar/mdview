@@ -45,13 +45,28 @@ enum ApplicationMenu {
         )
         copyItem.keyEquivalentModifierMask = [.command]
         editMenu.addItem(.separator())
-        let findItem = editMenu.addItem(
-            withTitle: "Find…",
-            action: #selector(NSResponder.performTextFinderAction(_:)),
-            keyEquivalent: "f"
+        addItem(
+            to: editMenu,
+            title: "Find…",
+            action: #selector(AppDelegate.showFind(_:)),
+            key: "f",
+            target: target
         )
-        findItem.tag = NSTextFinder.Action.showFindInterface.rawValue
-        findItem.keyEquivalentModifierMask = [.command]
+        addItem(
+            to: editMenu,
+            title: "Find Next",
+            action: #selector(AppDelegate.findNext(_:)),
+            key: "g",
+            target: target
+        )
+        addItem(
+            to: editMenu,
+            title: "Find Previous",
+            action: #selector(AppDelegate.findPrevious(_:)),
+            key: "g",
+            modifiers: [.command, .shift],
+            target: target
+        )
 
         let viewItem = NSMenuItem()
         mainMenu.addItem(viewItem)
@@ -94,10 +109,11 @@ enum ApplicationMenu {
         title: String,
         action: Selector,
         key: String,
+        modifiers: NSEvent.ModifierFlags = [.command],
         target: AnyObject
     ) {
         let item = menu.addItem(withTitle: title, action: action, keyEquivalent: key)
         item.target = target
-        item.keyEquivalentModifierMask = [.command]
+        item.keyEquivalentModifierMask = modifiers
     }
 }
