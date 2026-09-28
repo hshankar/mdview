@@ -36,10 +36,11 @@ Release archives are universal and do not require Swift, Xcode, Homebrew, or ano
 ## Install with Homebrew
 
 ```sh
+brew tap hshankar/tap
 brew install hshankar/tap/mdview
 ```
 
-Homebrew builds `mdview` from its tagged source and installs the executable with its resource bundle.
+If Homebrew asks you to trust the third-party tap, run `brew trust hshankar/tap` and repeat the install. Homebrew builds `mdview` from its tagged source and installs the executable with its resource bundle.
 
 ## Build from source
 
