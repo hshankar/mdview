@@ -118,7 +118,7 @@ Local raster images should be supported. SVG support is desirable.
 - Scale large images down to the available content width while preserving aspect ratio.
 - Provide coordinated light and dark color schemes.
 - Follow the macOS appearance by default and update when the system appearance changes.
-- Avoid permanent toolbars, sidebars, or controls in the MVP.
+- Keep the reading surface distraction-free; expose the table of contents only through an on-demand title-bar control.
 - Provide a distinctive, high-resolution application icon for the Dock and minimized windows.
 - Provide a print-friendly layout where practical.
 
@@ -158,10 +158,15 @@ Remembering the last zoom level is desirable but not required for the MVP.
 - Open `http` and `https` links in the default system browser rather than inside the viewer.
 - Support standard macOS quit and close-window shortcuts.
 
-### 10.2 Desirable
+### 10.2 Current enhancements
 
-- `Command-F` document search
+- `Command-F` document search with next and previous match commands
 - `Command-R` manual reload
+- An on-demand, collapsible table-of-contents sidebar
+- Standard macOS Window menu, Dock window list, and `Command-\`` window cycling
+
+### 10.3 Future possibilities
+
 - Drag and drop a Markdown file onto the window
 - Open links to local Markdown files in the viewer
 - Back and forward navigation for local Markdown links
@@ -177,7 +182,7 @@ Reloading should:
 - Display a non-destructive error if the file temporarily disappears or cannot be read.
 - Avoid unnecessary polling and CPU usage.
 
-Automatic reload is high priority but may follow the first render-only MVP.
+Automatic reload with debouncing and scroll-position preservation is implemented.
 
 ## 12. Performance and footprint
 
@@ -188,7 +193,7 @@ Automatic reload is high priority but may follow the first render-only MVP.
 - Avoid continuous redraw loops.
 - Load and highlight documents off the main UI thread when needed to keep the window responsive.
 - Handle ordinary README files and moderately large technical documents smoothly.
-- Avoid loading remote resources unless they are explicitly referenced by the document.
+- Block remote document resources by default.
 
 Targets should be measured on a release build before setting hard limits. Initial goals are:
 
@@ -221,8 +226,8 @@ The preferred implementation is:
 - Swift
 - AppKit for application and window management
 - `WKWebView` for document presentation
-- A CommonMark/GitHub-flavored Markdown parser such as `cmark-gfm`
-- A small bundled syntax highlighter such as Prism or a trimmed highlight.js build
+- A bundled CommonMark/GitHub-flavored Markdown parser (Marked)
+- A trimmed bundled highlight.js build
 - Bundled HTML and CSS templates
 
 The implementation should create its UI programmatically and avoid storyboards unless they provide a clear benefit.
@@ -233,15 +238,12 @@ This architecture is preferred over a custom GPU renderer because macOS already 
 
 ## 16. Distribution
 
-- Provide an installable `mdview` command on the user's `PATH`.
-- Ship a universal release supporting both Intel and Apple silicon Macs.
-- Provide a noninteractive installer suitable for clean cloud macOS machines.
-- Verify downloaded release archives with a published SHA-256 checksum.
-- A release build should not require a separate language runtime or package manager.
-- All required templates, styles, and highlighting assets must ship with the application.
-- Code signing and notarization are desirable for public distribution.
-- Build and test release artifacts automatically in CI.
-- A future `.app` bundle may support opening `.md` files from Finder while retaining the CLI entry point.
+- Provide an installable `mdview` command on the user's `PATH` through Homebrew or `make install`.
+- Publish tagged source releases that build on Intel and Apple silicon Macs.
+- Keep release source self-contained; do not require a package manager beyond the system Swift toolchain.
+- Bundle all required templates, styles, and highlighting assets in source builds.
+- Build and test Intel and Apple silicon source builds automatically in CI.
+- A future signed and notarized `.app` bundle may support opening `.md` files from Finder while retaining the CLI entry point.
 
 ## 17. MVP acceptance criteria
 
@@ -260,13 +262,9 @@ The MVP is complete when all of the following are true:
 
 ## 18. Post-MVP possibilities
 
-- Automatic file reload with scroll preservation
-- Document outline or table-of-contents panel
-- Find in document
 - Print and export to PDF
 - Theme selection and custom CSS
 - Copy buttons on code blocks
 - Remembered window size, position, zoom, and scroll position
 - Quick Look extension
 - Finder file association
-- Multiple windows
