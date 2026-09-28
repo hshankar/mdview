@@ -8,6 +8,13 @@
   <style>{{DOCUMENT_STYLE}}</style>
 </head>
 <body>
+  <aside id="table-of-contents" aria-label="Table of contents" aria-hidden="true">
+    <header>
+      <span>Contents</span>
+      <button id="close-table-of-contents" type="button" aria-label="Close table of contents">×</button>
+    </header>
+    <nav id="table-of-contents-list" aria-label="Document headings"></nav>
+  </aside>
   <main id="document" class="markdown-body" aria-label="Markdown document"></main>
   <noscript>JavaScript is required to render this Markdown document.</noscript>
   <script>{{MARKED_SCRIPT}}</script>
@@ -64,6 +71,71 @@
           console.debug("Could not highlight code block", error);
         }
       });
+
+      const sidebar = document.getElementById("table-of-contents");
+      const sidebarList = document.getElementById("table-of-contents-list");
+      const closeSidebar = document.getElementById("close-table-of-contents");
+
+      const setSidebarVisible = (visible) => {
+        sidebar.classList.toggle("is-visible", visible);
+        document.body.classList.toggle("has-visible-table-of-contents", visible);
+        sidebar.setAttribute("aria-hidden", String(!visible));
+      };
+
+      window.mdviewToggleSidebar = () => {
+        setSidebarVisible(!sidebar.classList.contains("is-visible"));
+      };
+      closeSidebar.addEventListener("click", () => setSidebarVisible(false));
+
+      const root = { depth: 0, children: [] };
+      const stack = [root];
+      documentElement.querySelectorAll("h1, h2, h3, h4, h5, h6").forEach((heading) => {
+        const depth = Number(heading.tagName.substring(1));
+        const title = heading.textContent.trim();
+        if (!title) return;
+
+        while (stack.at(-1).depth >= depth) stack.pop();
+        const item = { depth, title, id: heading.id, children: [] };
+        stack.at(-1).children.push(item);
+        stack.push(item);
+      });
+
+      const renderOutline = (items) => {
+        const list = document.createElement("ul");
+        items.forEach((item) => {
+          const entry = document.createElement("li");
+          const link = document.createElement("a");
+          link.href = `#${item.id}`;
+          link.textContent = item.title;
+          link.addEventListener("click", () => {
+            document.getElementById(item.id)?.scrollIntoView({ behavior: "smooth", block: "start" });
+          });
+
+          if (item.children.length) {
+            const disclosure = document.createElement("button");
+            disclosure.type = "button";
+            disclosure.className = "toc-disclosure";
+            disclosure.setAttribute("aria-expanded", "true");
+            disclosure.setAttribute("aria-label", `Collapse ${item.title}`);
+            disclosure.textContent = "⌄";
+            disclosure.addEventListener("click", () => {
+              const collapsed = entry.classList.toggle("is-collapsed");
+              disclosure.setAttribute("aria-expanded", String(!collapsed));
+              disclosure.setAttribute("aria-label", `${collapsed ? "Expand" : "Collapse"} ${item.title}`);
+            });
+            entry.append(disclosure);
+          } else {
+            entry.classList.add("has-no-children");
+          }
+
+          entry.append(link);
+          if (item.children.length) entry.append(renderOutline(item.children));
+          list.append(entry);
+        });
+        return list;
+      };
+
+      if (root.children.length) sidebarList.append(renderOutline(root.children));
     })();
   </script>
 </body>

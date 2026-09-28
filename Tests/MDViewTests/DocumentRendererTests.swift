@@ -20,6 +20,9 @@ final class DocumentRendererTests: XCTestCase {
         XCTAssertTrue(html.contains("marked v18.0.14"))
         XCTAssertTrue(html.contains("hljs.highlightElement"))
         XCTAssertTrue(html.contains("prefers-color-scheme: dark"))
+        XCTAssertTrue(html.contains("table-of-contents"))
+        XCTAssertTrue(html.contains("mdviewToggleSidebar"))
+        XCTAssertTrue(html.contains("toc-disclosure"))
         XCTAssertFalse(html.contains("{{DOCUMENT_STYLE}}"))
         XCTAssertFalse(html.contains("{{MARKDOWN_BASE64}}"))
     }

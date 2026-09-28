@@ -14,6 +14,7 @@ mdview README.md
 - Syntax highlighting for fenced code blocks
 - Responsive light and dark themes that follow macOS
 - Whole-page zoom with `Command-=`, `Command--`, and `Command-0`
+- Collapsible table of contents from the sidebar button in the title bar
 - Relative local images
 - Automatic reload after atomic or in-place file saves
 - Scroll-position preservation during reload
@@ -107,7 +108,7 @@ make install PREFIX="$HOME/.local"
 Build a distributable Intel and Apple silicon archive with:
 
 ```sh
-scripts/package-release.sh 0.1.4 dist
+scripts/package-release.sh 0.1.5 dist
 ```
 
 The installed `mdview` executable and adjacent `mdview_MDView.bundle` resource directory are both required. Remove a source installation with:

@@ -49,11 +49,142 @@ html {
 }
 
 body {
+  display: grid;
+  grid-template-columns: 0 minmax(0, 1fr);
   margin: 0;
   min-width: 280px;
+  overflow-x: hidden;
   color: var(--foreground);
   background: var(--background);
   -webkit-font-smoothing: antialiased;
+  transition: grid-template-columns 180ms ease-out;
+}
+
+body.has-visible-table-of-contents {
+  grid-template-columns: min(320px, calc(100vw - 48px)) minmax(0, 1fr);
+}
+
+#table-of-contents {
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  display: flex;
+  width: min(320px, calc(100vw - 48px));
+  height: 100vh;
+  flex-direction: column;
+  border-right: 1px solid var(--border);
+  background: var(--background);
+  box-shadow: 8px 0 24px rgba(27, 31, 36, 0.16);
+  transform: translateX(-100%);
+  transition: transform 180ms ease-out;
+}
+
+#table-of-contents.is-visible {
+  transform: translateX(0);
+}
+
+#table-of-contents header {
+  display: flex;
+  min-height: 48px;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 12px 0 16px;
+  border-bottom: 1px solid var(--border-muted);
+  color: var(--foreground);
+  font-size: 0.875em;
+  font-weight: 650;
+}
+
+#close-table-of-contents,
+.toc-disclosure {
+  appearance: none;
+  border: 0;
+  color: var(--muted);
+  cursor: pointer;
+  font: inherit;
+}
+
+#close-table-of-contents {
+  width: 28px;
+  height: 28px;
+  border-radius: 5px;
+  background: transparent;
+  font-size: 22px;
+  font-weight: 300;
+  line-height: 24px;
+}
+
+#close-table-of-contents:hover,
+#close-table-of-contents:focus-visible,
+.toc-disclosure:hover,
+.toc-disclosure:focus-visible {
+  outline: none;
+  color: var(--foreground);
+  background: var(--accent-muted);
+}
+
+#table-of-contents-list {
+  padding: 12px 8px 32px;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+
+#table-of-contents-list ul {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+#table-of-contents-list li {
+  position: relative;
+  margin: 1px 0;
+  padding-left: 20px;
+}
+
+#table-of-contents-list li.has-no-children {
+  padding-left: 24px;
+}
+
+#table-of-contents-list a {
+  display: block;
+  padding: 4px 6px;
+  border-radius: 5px;
+  color: var(--foreground);
+  font-size: 0.875em;
+  line-height: 1.35;
+}
+
+#table-of-contents-list a:hover,
+#table-of-contents-list a:focus-visible {
+  outline: none;
+  background: var(--accent-muted);
+  color: var(--accent);
+  text-decoration: none;
+}
+
+.toc-disclosure {
+  position: absolute;
+  top: 4px;
+  left: 1px;
+  width: 20px;
+  height: 20px;
+  border-radius: 4px;
+  background: transparent;
+  font-size: 14px;
+  line-height: 16px;
+  transition: transform 120ms ease-out;
+}
+
+#table-of-contents-list li.is-collapsed > .toc-disclosure {
+  transform: rotate(-90deg);
+}
+
+#table-of-contents-list li.is-collapsed > ul {
+  display: none;
+}
+
+#table-of-contents-list li > ul {
+  margin-left: 8px;
 }
 
 ::selection {
@@ -304,6 +435,14 @@ mark {
   .hljs-deletion { color: #ffdcd7; background-color: #67060c; }
 }
 
+@media (prefers-reduced-motion: reduce) {
+  body,
+  #table-of-contents,
+  .toc-disclosure {
+    transition: none;
+  }
+}
+
 @media (max-width: 640px) {
   .markdown-body {
     width: min(calc(100% - 32px), var(--content-width));
@@ -312,6 +451,10 @@ mark {
 }
 
 @media print {
+  body {
+    display: block;
+  }
+
   :root {
     --background: #fff;
     --foreground: #111;
@@ -326,6 +469,8 @@ mark {
     max-width: none;
     padding: 0;
   }
+
+  #table-of-contents { display: none; }
 
   a { color: inherit; }
   pre { break-inside: avoid; white-space: pre-wrap; }

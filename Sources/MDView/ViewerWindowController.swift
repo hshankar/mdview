@@ -35,6 +35,18 @@ final class ViewerWindowController: NSWindowController {
 
         super.init(window: window)
 
+        let sidebarButton = NSButton(
+            image: NSImage(systemSymbolName: "sidebar.left", accessibilityDescription: "Table of Contents")!,
+            target: self,
+            action: #selector(toggleTableOfContents(_:))
+        )
+        sidebarButton.bezelStyle = .toolbar
+        sidebarButton.toolTip = "Show Table of Contents"
+        sidebarButton.setAccessibilityLabel("Show table of contents")
+        let sidebarAccessory = NSTitlebarAccessoryViewController()
+        sidebarAccessory.layoutAttribute = .left
+        sidebarAccessory.view = sidebarButton
+        window.addTitlebarAccessoryViewController(sidebarAccessory)
         window.commandKeyHandler = { [weak self] event in
             self?.handleCommandKeyEquivalent(event) ?? false
         }
@@ -250,6 +262,10 @@ final class ViewerWindowController: NSWindowController {
         self.findField = findField
         findStatusLabel = statusLabel
         window.contentView = container
+    }
+
+    @objc private func toggleTableOfContents(_ sender: Any?) {
+        webView?.evaluateJavaScript("window.mdviewToggleSidebar?.()")
     }
 
     private func find(backwards: Bool) {
