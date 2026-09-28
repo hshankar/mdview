@@ -69,7 +69,7 @@ case " $ARCHS " in *" x86_64 "*) ;; *) echo "error: x86_64 slice is missing" >&2
 cp "$BINARY" "$STAGE_DIR/mdview"
 cp -R "$RESOURCE_BUNDLE" "$STAGE_DIR/mdview_MDView.bundle"
 cp install.sh "$STAGE_DIR/mdview-update"
-cp README.md THIRD_PARTY_NOTICES.md "$STAGE_DIR/"
+cp README.md LICENSE THIRD_PARTY_NOTICES.md "$STAGE_DIR/"
 cp -R ThirdParty "$STAGE_DIR/ThirdParty"
 chmod 0755 "$STAGE_DIR/mdview" "$STAGE_DIR/mdview-update"
 
