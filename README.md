@@ -35,60 +35,45 @@ Release archives are universal and do not require Swift, Xcode, Homebrew, or ano
 
 ## Install a release
 
-Because the repository is currently private, authenticate GitHub CLI once and run:
+Download the installer, review it if desired, then run it:
 
 ```sh
-gh auth login
-gh api repos/hshankar/mdview/contents/install.sh --jq .content \
-  | base64 --decode \
-  | sh
+curl -fsSLO https://raw.githubusercontent.com/hshankar/mdview/main/install.sh
+sh install.sh
 ```
 
-The installer downloads the latest release, verifies its SHA-256 checksum and code signature, and installs into `/usr/local/bin` when writable. Otherwise it uses `~/.local/bin` and prints the required `PATH` entry.
+The installer downloads the latest release, verifies its SHA-256 checksum, and installs into `/usr/local/bin` when writable. Otherwise it uses `~/.local/bin` and prints the required `PATH` entry.
 
-For a noninteractive or cloud installation:
-
-```sh
-export GH_TOKEN="..." # token with access to hshankar/mdview
-export MDVIEW_INSTALL_DIR="$HOME/.local/bin"
-gh api repos/hshankar/mdview/contents/install.sh --jq .content \
-  | base64 --decode \
-  | sh
-export PATH="$MDVIEW_INSTALL_DIR:$PATH"
-mdview --version
-```
-
-Pin a release by setting `MDVIEW_VERSION`, for example:
+To install a specific version, download the installer from that tag and set `MDVIEW_VERSION`:
 
 ```sh
-MDVIEW_VERSION=0.1.0 MDVIEW_INSTALL_DIR="$HOME/.local/bin" ./install.sh
-```
-
-When the repository is public, the unauthenticated equivalent is:
-
-```sh
-curl -fsSL https://raw.githubusercontent.com/hshankar/mdview/main/install.sh | sh
+curl -fsSLO https://raw.githubusercontent.com/hshankar/mdview/v0.1.6/install.sh
+MDVIEW_VERSION=0.1.6 MDVIEW_INSTALL_DIR="$HOME/.local/bin" sh install.sh
 ```
 
 The command hands the file to a detached viewer process and returns immediately. Later invocations reuse that process and open another window. After the last viewer window closes, the process remains warm for five minutes and then exits automatically. `Command-Q` exits it immediately.
 
+> Releases are currently ad-hoc signed, not Developer ID signed or notarized. Gatekeeper may require an explicit approval before macOS opens `mdview` for the first time.
+
 ## Update
 
-After installing version 0.1.1 or later, update in place with:
+Update an existing installation with:
 
 ```sh
 mdview update
 ```
 
-It uses the bundled updater, stops any warm viewer process, downloads the latest release, verifies its SHA-256 checksum and code signature, then atomically replaces `mdview`, `mdview-update`, and the adjacent resource bundle in the same installation directory.
+It stops any warm viewer process, downloads the latest release, verifies its SHA-256 checksum, and replaces `mdview`, `mdview-update`, and the adjacent resource bundle in the same installation directory.
 
-For the existing 0.1.0 release, run the installer once manually to obtain the new command:
+## Uninstall
+
+For a default user-local installation:
 
 ```sh
-gh api repos/hshankar/mdview/contents/install.sh --jq .content \
-  | base64 --decode \
-  | sh
+make uninstall PREFIX="$HOME/.local"
 ```
+
+For another installation directory, remove `mdview`, `mdview-update`, and `mdview_MDView.bundle` from that directory.
 
 ## Build from source
 
