@@ -73,10 +73,18 @@ cp README.md LICENSE THIRD_PARTY_NOTICES.md "$STAGE_DIR/"
 cp -R ThirdParty "$STAGE_DIR/ThirdParty"
 chmod 0755 "$STAGE_DIR/mdview" "$STAGE_DIR/mdview-update"
 
-# Ad-hoc signing seals the universal Mach-O. A future Developer ID identity can
-# replace this without changing the archive or installer format.
-codesign --force --sign - --timestamp=none "$STAGE_DIR/mdview"
-codesign --verify --verbose "$STAGE_DIR/mdview"
+if [ -n "${MDVIEW_SIGNING_IDENTITY:-}" ]; then
+    codesign --force --options runtime --timestamp \
+        --sign "$MDVIEW_SIGNING_IDENTITY" "$STAGE_DIR/mdview"
+elif [ "${MDVIEW_ALLOW_AD_HOC_SIGNING:-}" = "1" ]; then
+    # CI builds use an explicit ad-hoc signature only for structural checks.
+    codesign --force --sign - --timestamp=none "$STAGE_DIR/mdview"
+else
+    echo "error: set MDVIEW_SIGNING_IDENTITY to a Developer ID Application identity" >&2
+    echo "error: set MDVIEW_ALLOW_AD_HOC_SIGNING=1 only for non-release CI builds" >&2
+    exit 1
+fi
+codesign --verify --strict --verbose "$STAGE_DIR/mdview"
 
 rm -f "$OUTPUT_DIR/$ARCHIVE_NAME" "$OUTPUT_DIR/$ARCHIVE_NAME.sha256"
 tar -czf "$OUTPUT_DIR/$ARCHIVE_NAME" -C "$SCRATCH_DIR" "$STAGE_NAME"

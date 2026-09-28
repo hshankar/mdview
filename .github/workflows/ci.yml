@@ -27,6 +27,8 @@ jobs:
         run: swift test
 
       - name: Build universal release package
+        env:
+          MDVIEW_ALLOW_AD_HOC_SIGNING: "1"
         run: scripts/package-release.sh 0.1.0-ci dist
 
       - name: Verify universal binary
