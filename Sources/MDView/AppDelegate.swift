@@ -71,6 +71,14 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
         activeViewer?.findPrevious()
     }
 
+    @objc func selectNextWindow(_ sender: Any?) {
+        activeViewer?.selectNextWindow()
+    }
+
+    @objc func selectPreviousWindow(_ sender: Any?) {
+        activeViewer?.selectPreviousWindow()
+    }
+
     private var activeViewer: ViewerWindowController? {
         if let controller = NSApplication.shared.keyWindow?.windowController as? ViewerWindowController {
             return controller

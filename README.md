@@ -15,6 +15,7 @@ mdview README.md
 - Responsive light and dark themes that follow macOS
 - Whole-page zoom with `Command-=`, `Command--`, and `Command-0`
 - Collapsible table of contents from the sidebar button in the title bar
+- Standard Window menu and Dock list for open documents
 - Relative local images
 - Automatic reload after atomic or in-place file saves
 - Scroll-position preservation during reload
@@ -108,7 +109,7 @@ make install PREFIX="$HOME/.local"
 Build a distributable Intel and Apple silicon archive with:
 
 ```sh
-scripts/package-release.sh 0.1.5 dist
+scripts/package-release.sh 0.1.6 dist
 ```
 
 The installed `mdview` executable and adjacent `mdview_MDView.bundle` resource directory are both required. Remove a source installation with:
@@ -130,6 +131,8 @@ make uninstall PREFIX="$HOME/.local"
 | `Shift-Command-G` | Find previous |
 | `Command-C` | Copy selected text |
 | `Command-W` | Close window |
+| `Command-\`` | Show next window |
+| `Shift-Command-\`` | Show previous window |
 | `Command-Q` | Quit |
 
 ## Security model

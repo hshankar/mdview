@@ -102,6 +102,45 @@ enum ApplicationMenu {
             key: "-",
             target: target
         )
+
+        let windowItem = NSMenuItem()
+        mainMenu.addItem(windowItem)
+        let windowMenu = NSMenu(title: "Window")
+        windowItem.submenu = windowMenu
+        NSApplication.shared.windowsMenu = windowMenu
+        let minimizeItem = windowMenu.addItem(
+            withTitle: "Minimize",
+            action: #selector(NSWindow.performMiniaturize(_:)),
+            keyEquivalent: "m"
+        )
+        minimizeItem.keyEquivalentModifierMask = [.command]
+        windowMenu.addItem(
+            withTitle: "Zoom",
+            action: #selector(NSWindow.performZoom(_:)),
+            keyEquivalent: ""
+        )
+        windowMenu.addItem(.separator())
+        addItem(
+            to: windowMenu,
+            title: "Show Next Window",
+            action: #selector(AppDelegate.selectNextWindow(_:)),
+            key: "`",
+            target: target
+        )
+        addItem(
+            to: windowMenu,
+            title: "Show Previous Window",
+            action: #selector(AppDelegate.selectPreviousWindow(_:)),
+            key: "`",
+            modifiers: [.command, .shift],
+            target: target
+        )
+        windowMenu.addItem(.separator())
+        windowMenu.addItem(
+            withTitle: "Bring All to Front",
+            action: #selector(NSApplication.arrangeInFront(_:)),
+            keyEquivalent: ""
+        )
     }
 
     private static func addItem(

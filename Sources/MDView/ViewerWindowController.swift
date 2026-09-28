@@ -28,6 +28,7 @@ final class ViewerWindowController: NSWindowController {
             defer: false
         )
         window.title = fileURL.lastPathComponent
+        window.tabbingMode = .disallowed
         window.miniwindowImage = ApplicationIcon.image()
         window.contentView = Self.makeLoadingView(filename: fileURL.lastPathComponent)
         window.center()
@@ -101,6 +102,10 @@ final class ViewerWindowController: NSWindowController {
             findNext()
         case ("g", [.command, .shift]):
             findPrevious()
+        case ("`", [.command]):
+            selectNextWindow()
+        case ("`", [.command, .shift]):
+            selectPreviousWindow()
         default:
             return false
         }
@@ -122,6 +127,29 @@ final class ViewerWindowController: NSWindowController {
 
     func findPrevious() {
         find(backwards: true)
+    }
+
+    func selectNextWindow() {
+        selectWindow(backwards: false)
+    }
+
+    func selectPreviousWindow() {
+        selectWindow(backwards: true)
+    }
+
+    private func selectWindow(backwards: Bool) {
+        // `orderedWindows` changes whenever a window becomes key, which makes
+        // it alternate between two windows. `windows` preserves AppKit's
+        // stable creation order for a predictable full cycle.
+        let windows = NSApplication.shared.windows.compactMap { $0 as? ViewerWindow }
+        guard windows.count > 1 else { return }
+
+        let currentWindow = (NSApplication.shared.keyWindow as? ViewerWindow) ?? (window as? ViewerWindow)
+        guard let currentWindow else { return }
+        let currentIndex = windows.firstIndex(of: currentWindow) ?? 0
+        let offset = backwards ? -1 : 1
+        let nextIndex = (currentIndex + offset + windows.count) % windows.count
+        windows[nextIndex].makeKeyAndOrderFront(nil)
     }
 
     private func installWebViewAndLoadDocument() {
