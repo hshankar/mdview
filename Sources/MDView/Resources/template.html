@@ -64,6 +64,20 @@
       const documentElement = document.getElementById("document");
       documentElement.innerHTML = marked.parse(markdown);
 
+      // Keep fragment links inside this generated document. All other links
+      // are handled by the native navigation policy.
+      documentElement.addEventListener("click", (event) => {
+        const link = event.target.closest("a[href]");
+        const href = link?.getAttribute("href");
+        if (!href?.startsWith("#")) return;
+
+        event.preventDefault();
+        document.getElementById(decodeURIComponent(href.substring(1)))?.scrollIntoView({
+          behavior: "smooth",
+          block: "start"
+        });
+      });
+
       documentElement.querySelectorAll("pre code").forEach((block) => {
         try {
           hljs.highlightElement(block);
@@ -107,7 +121,8 @@
           const link = document.createElement("a");
           link.href = `#${item.id}`;
           link.textContent = item.title;
-          link.addEventListener("click", () => {
+          link.addEventListener("click", (event) => {
+            event.preventDefault();
             document.getElementById(item.id)?.scrollIntoView({ behavior: "smooth", block: "start" });
           });
 

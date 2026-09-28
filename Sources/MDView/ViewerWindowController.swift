@@ -404,8 +404,6 @@ extension ViewerWindowController: WKNavigationDelegate {
         }
 
         switch LinkPolicy.disposition(for: url) {
-        case .allowInViewer:
-            decisionHandler(.allow)
         case .openExternally:
             NSWorkspace.shared.open(url)
             decisionHandler(.cancel)

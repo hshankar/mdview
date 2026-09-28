@@ -14,10 +14,10 @@ final class LinkPolicyTests: XCTestCase {
         )
     }
 
-    func testAllowsLocalDocumentAnchors() {
+    func testDeniesLocalDocumentAnchors() {
         XCTAssertEqual(
             LinkPolicy.disposition(for: URL(string: "file:///notes/#heading")!),
-            .allowInViewer
+            .deny
         )
     }
 
