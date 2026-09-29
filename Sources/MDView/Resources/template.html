@@ -63,8 +63,10 @@
       const bytes = Uint8Array.from(atob(encodedMarkdown), character => character.charCodeAt(0));
       const markdown = new TextDecoder("utf-8").decode(bytes);
       const documentElement = document.getElementById("document");
-      documentElement.innerHTML = marked.parse(markdown);
-      const markdownRenderedAt = performance.now();
+      const renderedMarkdown = marked.parse(markdown);
+      const markdownParsedAt = performance.now();
+      documentElement.innerHTML = renderedMarkdown;
+      const domInsertedAt = performance.now();
 
       // Keep fragment links inside this generated document. All other links
       // are handled by the native navigation policy.
@@ -157,13 +159,26 @@
 
       const outlineBuiltAt = performance.now();
       window.mdviewRenderMetrics = {
-        markdownMilliseconds: markdownRenderedAt - renderStartedAt,
-        highlightingMilliseconds: codeHighlightedAt - markdownRenderedAt,
+        parseMilliseconds: markdownParsedAt - renderStartedAt,
+        domInsertionMilliseconds: domInsertedAt - markdownParsedAt,
+        highlightingMilliseconds: codeHighlightedAt - domInsertedAt,
         outlineMilliseconds: outlineBuiltAt - codeHighlightedAt,
-        totalMilliseconds: outlineBuiltAt - renderStartedAt,
+        layoutMilliseconds: 0,
+        totalMilliseconds: 0,
+        complete: false,
         headingCount: root.children.length,
         codeBlockCount: documentElement.querySelectorAll("pre code").length
       };
+
+      // Force WebKit to resolve pending style and layout. Presentation timing
+      // is not available because the benchmark WebView is intentionally hidden.
+      setTimeout(() => {
+        documentElement.getBoundingClientRect();
+        const layoutCompletedAt = performance.now();
+        window.mdviewRenderMetrics.layoutMilliseconds = layoutCompletedAt - outlineBuiltAt;
+        window.mdviewRenderMetrics.totalMilliseconds = layoutCompletedAt - renderStartedAt;
+        window.mdviewRenderMetrics.complete = true;
+      }, 0);
     })();
   </script>
 </body>

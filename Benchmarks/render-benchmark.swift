@@ -3,10 +3,13 @@ import Foundation
 import WebKit
 
 struct RenderMetrics: Codable {
-    let markdownMilliseconds: Double
+    let parseMilliseconds: Double
+    let domInsertionMilliseconds: Double
     let highlightingMilliseconds: Double
     let outlineMilliseconds: Double
+    let layoutMilliseconds: Double
     let totalMilliseconds: Double
+    let complete: Bool
     let headingCount: Int
     let codeBlockCount: Int
 }
@@ -59,6 +62,10 @@ final class Benchmark: NSObject, WKNavigationDelegate {
     }
 
     func webView(_ webView: WKWebView, didFinish navigation: WKNavigation!) {
+        collectMetrics()
+    }
+
+    private func collectMetrics() {
         webView.evaluateJavaScript("JSON.stringify(window.mdviewRenderMetrics)") { [self] value, error in
             guard error == nil,
                   let json = value as? String,
@@ -67,6 +74,13 @@ final class Benchmark: NSObject, WKNavigationDelegate {
                   let loadStartedAt else {
                 fputs("Could not collect WebKit render metrics.\n", stderr)
                 exit(1)
+            }
+
+            guard render.complete else {
+                DispatchQueue.main.asyncAfter(deadline: .now() + .milliseconds(5)) { [weak self] in
+                    self?.collectMetrics()
+                }
+                return
             }
 
             let wallMilliseconds = Double(DispatchTime.now().uptimeNanoseconds - loadStartedAt.uptimeNanoseconds)
