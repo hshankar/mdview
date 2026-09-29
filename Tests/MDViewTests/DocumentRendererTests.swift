@@ -9,7 +9,7 @@ final class DocumentRendererTests: XCTestCase {
 
         XCTAssertFalse(html.contains(markdown))
         XCTAssertTrue(html.contains(Data(markdown.utf8).base64EncodedString()))
-        XCTAssertTrue(html.contains("Raw HTML is displayed as text"))
+        XCTAssertTrue(html.contains("html: false"))
     }
 
     func testBuildsCompleteOfflineDocument() throws {
@@ -19,7 +19,8 @@ final class DocumentRendererTests: XCTestCase {
         XCTAssertTrue(html.contains("Content-Security-Policy"))
         XCTAssertTrue(html.contains("img-src file: data:"))
         XCTAssertFalse(html.contains("img-src file: data: http: https:"))
-        XCTAssertTrue(html.contains("marked v18.0.14"))
+        XCTAssertTrue(html.contains("window.markdownit"))
+        XCTAssertTrue(html.contains("window.markdownitTaskLists"))
         XCTAssertTrue(html.contains("hljs.highlightElement"))
         XCTAssertTrue(html.contains("prefers-color-scheme: dark"))
         XCTAssertTrue(html.contains("table-of-contents"))
@@ -27,5 +28,7 @@ final class DocumentRendererTests: XCTestCase {
         XCTAssertTrue(html.contains("toc-disclosure"))
         XCTAssertFalse(html.contains("{{DOCUMENT_STYLE}}"))
         XCTAssertFalse(html.contains("{{MARKDOWN_BASE64}}"))
+        XCTAssertFalse(html.contains("{{MARKDOWN_IT_SCRIPT}}"))
+        XCTAssertFalse(html.contains("{{TASK_LISTS_SCRIPT}}"))
     }
 }

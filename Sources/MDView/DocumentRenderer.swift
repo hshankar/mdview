@@ -17,13 +17,15 @@ enum DocumentRendererError: LocalizedError {
 struct DocumentRenderer {
     private let template: String
     private let stylesheet: String
-    private let markedScript: String
+    private let markdownItScript: String
+    private let taskListsScript: String
     private let highlightScript: String
 
     init(bundle: Bundle = .module) throws {
         template = try Self.loadResource("template", extension: "html", bundle: bundle)
         stylesheet = try Self.loadResource("document", extension: "css", bundle: bundle)
-        markedScript = try Self.loadResource("marked", extension: "js", bundle: bundle)
+        markdownItScript = try Self.loadResource("markdown-it", extension: "js", bundle: bundle)
+        taskListsScript = try Self.loadResource("markdown-it-task-lists", extension: "js", bundle: bundle)
         highlightScript = try Self.loadResource("highlight", extension: "js", bundle: bundle)
     }
 
@@ -32,7 +34,8 @@ struct DocumentRenderer {
 
         return template
             .replacingOccurrences(of: "{{DOCUMENT_STYLE}}", with: stylesheet)
-            .replacingOccurrences(of: "{{MARKED_SCRIPT}}", with: markedScript)
+            .replacingOccurrences(of: "{{MARKDOWN_IT_SCRIPT}}", with: markdownItScript)
+            .replacingOccurrences(of: "{{TASK_LISTS_SCRIPT}}", with: taskListsScript)
             .replacingOccurrences(of: "{{HIGHLIGHT_SCRIPT}}", with: highlightScript)
             .replacingOccurrences(of: "{{MARKDOWN_BASE64}}", with: encodedMarkdown)
     }

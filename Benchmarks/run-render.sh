@@ -65,6 +65,7 @@ swift = subprocess.run(["swift", "--version"], capture_output=True, text=True, c
 print(f"- Platform: {platform.platform()}")
 print(f"- Hardware: {cpu}; {cores}; {memory}")
 print(f"- Toolchain: {swift}")
+print("- Markdown parser: markdown-it 15.0.2 with markdown-it-task-lists 2.1.1")
 print(f"- System CPU snapshot at suite start: {cpu_snapshot}")
 print(f"- System memory snapshot at suite start: {memory_snapshot}")
 print(f"- Samples per fixture: {runs} (first load plus {runs - 1} warm loads)")
@@ -73,7 +74,7 @@ print("- Host CPU/RSS: `/usr/bin/time -l` for the benchmark host only; WebKit he
 print()
 print("## Results")
 print()
-print("| Fixture | Markdown size | First-load wall | Warm wall median | Base64 median | Byte array median | UTF-8 median | Lexer median | HTML generation median | DOM insertion median | Highlight median | TOC median | Layout median | JS total median | Host CPU | Host max RSS |")
+print("| Fixture | Markdown size | First-load wall | Warm wall median | Base64 median | Byte array median | UTF-8 median | Parser median | HTML generation median | DOM insertion median | Highlight median | TOC median | Layout median | JS total median | Host CPU | Host max RSS |")
 print("| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |")
 for fixture in fixtures:
     data = json.load(open(f"{work}/{fixture}.json"))
@@ -92,7 +93,7 @@ for fixture in fixtures:
         f"{milliseconds([item['base64DecodeMilliseconds'] for item in render])} ms | "
         f"{milliseconds([item['byteArrayMilliseconds'] for item in render])} ms | "
         f"{milliseconds([item['utf8DecodeMilliseconds'] for item in render])} ms | "
-        f"{milliseconds([item['lexerMilliseconds'] for item in render])} ms | "
+        f"{milliseconds([item['parserMilliseconds'] for item in render])} ms | "
         f"{milliseconds([item['htmlGenerationMilliseconds'] for item in render])} ms | "
         f"{milliseconds([item['domInsertionMilliseconds'] for item in render])} ms | "
         f"{milliseconds([item['highlightingMilliseconds'] for item in render])} ms | "

@@ -17,24 +17,24 @@
   </aside>
   <main id="document" class="markdown-body" aria-label="Markdown document"></main>
   <noscript>JavaScript is required to render this Markdown document.</noscript>
-  <script>{{MARKED_SCRIPT}}</script>
+  <script>{{MARKDOWN_IT_SCRIPT}}</script>
+  <script>{{TASK_LISTS_SCRIPT}}</script>
   <script>{{HIGHLIGHT_SCRIPT}}</script>
   <script>
     (() => {
       "use strict";
 
-      const escapeHTML = (value) => value
-        .replaceAll("&", "&amp;")
-        .replaceAll("<", "&lt;")
-        .replaceAll(">", "&gt;")
-        .replaceAll('"', "&quot;")
-        .replaceAll("'", "&#39;");
+      const markdownParser = window.markdownit({
+        html: false,
+        linkify: true,
+        typographer: false,
+        breaks: false
+      }).use(window.markdownitTaskLists, { enabled: false });
 
       const seenHeadingIDs = new Map();
       const headingID = (text) => {
         const base = text
           .toLocaleLowerCase()
-          .replace(/<[^>]*>/g, "")
           .replace(/[^\p{Letter}\p{Number}\s-]/gu, "")
           .trim()
           .replace(/\s+/g, "-") || "section";
@@ -42,21 +42,6 @@
         seenHeadingIDs.set(base, count + 1);
         return count === 0 ? base : `${base}-${count}`;
       };
-
-      marked.use({
-        gfm: true,
-        breaks: false,
-        renderer: {
-          // Raw HTML is displayed as text. Markdown documents are untrusted input.
-          html({ text }) {
-            return escapeHTML(text);
-          },
-          heading({ tokens, depth }) {
-            const text = this.parser.parseInline(tokens);
-            return `<h${depth} id="${headingID(text)}">${text}</h${depth}>`;
-          }
-        }
-      });
 
       const renderStartedAt = performance.now();
       const encodedMarkdown = "{{MARKDOWN_BASE64}}";
@@ -67,9 +52,14 @@
       const markdown = new TextDecoder("utf-8").decode(bytes);
       const markdownDecodedAt = performance.now();
       const documentElement = document.getElementById("document");
-      const markdownTokens = marked.lexer(markdown);
-      const markdownLexedAt = performance.now();
-      const renderedMarkdown = marked.parser(markdownTokens);
+      const parserEnvironment = {};
+      const markdownTokens = markdownParser.parse(markdown, parserEnvironment);
+      const markdownParsedAt = performance.now();
+      const renderedMarkdown = markdownParser.renderer.render(
+        markdownTokens,
+        markdownParser.options,
+        parserEnvironment
+      );
       const htmlGeneratedAt = performance.now();
       documentElement.innerHTML = renderedMarkdown;
       const domInsertedAt = performance.now();
@@ -118,6 +108,7 @@
         const depth = Number(heading.tagName.substring(1));
         const title = heading.textContent.trim();
         if (!title) return;
+        heading.id = headingID(title);
 
         while (stack.at(-1).depth >= depth) stack.pop();
         const item = { depth, title, id: heading.id, children: [] };
@@ -168,8 +159,8 @@
         base64DecodeMilliseconds: base64DecodedAt - renderStartedAt,
         byteArrayMilliseconds: bytesConstructedAt - base64DecodedAt,
         utf8DecodeMilliseconds: markdownDecodedAt - bytesConstructedAt,
-        lexerMilliseconds: markdownLexedAt - markdownDecodedAt,
-        htmlGenerationMilliseconds: htmlGeneratedAt - markdownLexedAt,
+        parserMilliseconds: markdownParsedAt - markdownDecodedAt,
+        htmlGenerationMilliseconds: htmlGeneratedAt - markdownParsedAt,
         domInsertionMilliseconds: domInsertedAt - htmlGeneratedAt,
         highlightingMilliseconds: codeHighlightedAt - domInsertedAt,
         outlineMilliseconds: outlineBuiltAt - codeHighlightedAt,

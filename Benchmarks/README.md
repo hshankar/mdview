@@ -27,7 +27,7 @@ Keep `run.sh`, `window-benchmark.swift`, and `fixture.md` unchanged when compari
 
 ## Rendering benchmark
 
-`run-render.sh` measures Markdown-to-DOM rendering inside an offscreen `WKWebView`. It uses committed deterministic prose and code-heavy fixtures from 10 KiB through 100 KiB, records the first load plus repeated warm loads, and separates source decoding, Marked lexing, HTML generation, DOM insertion, syntax highlighting, outline building, and layout time.
+`run-render.sh` measures Markdown-to-DOM rendering inside an offscreen `WKWebView`. It uses committed deterministic prose and code-heavy fixtures from 10 KiB through 100 KiB, records the first load plus repeated warm loads, and separates source decoding, Markdown parsing, HTML generation, DOM insertion, syntax highlighting, outline building, and layout time.
 
 ```sh
 Benchmarks/run-render.sh > result.md

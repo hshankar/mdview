@@ -226,7 +226,7 @@ The preferred implementation is:
 - Swift
 - AppKit for application and window management
 - `WKWebView` for document presentation
-- A bundled CommonMark/GitHub-flavored Markdown parser (Marked)
+- A bundled CommonMark/GitHub-flavored Markdown parser (markdown-it with task-list support)
 - A trimmed bundled highlight.js build
 - Bundled HTML and CSS templates
 

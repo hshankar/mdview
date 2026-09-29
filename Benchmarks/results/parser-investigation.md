@@ -116,3 +116,16 @@ A worker could keep the UI responsive, and progressive rendering could improve f
 2. Re-run the committed benchmark and save an after-result.
 3. Lazily highlight off-screen code blocks to improve the separate code-heavy bottleneck.
 4. Load the rendering shell once and update only Markdown on reload to reduce warm-reload navigation overhead.
+
+## Implementation result
+
+markdown-it 15.0.2 with markdown-it-task-lists 2.1.1 was integrated and measured with six samples per fixture. The complete report is in [`render-after-markdown-it.md`](render-after-markdown-it.md).
+
+| 106 KiB prose metric | Marked baseline | markdown-it | Improvement |
+| --- | ---: | ---: | ---: |
+| First-load wall | 949.4 ms | 154.5 ms | 83.7% |
+| Warm wall median | 814.2 ms | 20.7 ms | 97.5% |
+| Parser stage | 801.0 ms | 5.0 ms | 99.4% |
+| JavaScript total | 809.0 ms | 13.0 ms | 98.4% |
+
+The 101 KiB code-heavy JavaScript total remained in the same range (133.5 ms before and 143.0 ms after). Its parser stage is only 2.0 ms; syntax highlighting and layout account for nearly all remaining work.

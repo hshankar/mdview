@@ -6,7 +6,7 @@ struct RenderMetrics: Codable {
     let base64DecodeMilliseconds: Double
     let byteArrayMilliseconds: Double
     let utf8DecodeMilliseconds: Double
-    let lexerMilliseconds: Double
+    let parserMilliseconds: Double
     let htmlGenerationMilliseconds: Double
     let domInsertionMilliseconds: Double
     let highlightingMilliseconds: Double
@@ -145,7 +145,8 @@ func resource(_ name: String) throws -> String {
 let markdown = try String(contentsOf: fileURL, encoding: .utf8)
 let html = try resource("template.html")
     .replacingOccurrences(of: "{{DOCUMENT_STYLE}}", with: resource("document.css"))
-    .replacingOccurrences(of: "{{MARKED_SCRIPT}}", with: resource("marked.js"))
+    .replacingOccurrences(of: "{{MARKDOWN_IT_SCRIPT}}", with: resource("markdown-it.js"))
+    .replacingOccurrences(of: "{{TASK_LISTS_SCRIPT}}", with: resource("markdown-it-task-lists.js"))
     .replacingOccurrences(of: "{{HIGHLIGHT_SCRIPT}}", with: resource("highlight.js"))
     .replacingOccurrences(of: "{{MARKDOWN_BASE64}}", with: Data(markdown.utf8).base64EncodedString())
 
