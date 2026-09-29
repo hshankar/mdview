@@ -27,10 +27,10 @@ Keep `run.sh`, `window-benchmark.swift`, and `fixture.md` unchanged when compari
 
 ## Rendering benchmark
 
-`run-render.sh` measures Markdown-to-DOM rendering inside an offscreen `WKWebView`. It generates deterministic prose and code-heavy fixtures from 10 KiB through 100 KiB, records the first load plus repeated warm loads, and separates Marked, syntax-highlighting, and outline-building time.
+`run-render.sh` measures Markdown-to-DOM rendering inside an offscreen `WKWebView`. It uses committed deterministic prose and code-heavy fixtures from 10 KiB through 100 KiB, records the first load plus repeated warm loads, and separates Marked, syntax-highlighting, and outline-building time.
 
 ```sh
 Benchmarks/run-render.sh > result.md
 ```
 
-Set `RUNS` to control the number of samples; it defaults to `6` (one first load and five warm loads). The generated fixtures are deliberately temporary, so the repository does not carry large benchmark-only documents.
+Set `RUNS` to control the number of samples; it defaults to `6` (one first load and five warm loads). Each report includes hardware, macOS/toolchain, and point-in-time system CPU/memory details. It also includes CPU time and maximum RSS for the benchmark host process; WebKit renders in a separate helper process, so those host-process figures must not be treated as total renderer resource use.
