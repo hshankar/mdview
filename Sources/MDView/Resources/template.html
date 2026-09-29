@@ -58,11 +58,13 @@
         }
       });
 
+      const renderStartedAt = performance.now();
       const encodedMarkdown = "{{MARKDOWN_BASE64}}";
       const bytes = Uint8Array.from(atob(encodedMarkdown), character => character.charCodeAt(0));
       const markdown = new TextDecoder("utf-8").decode(bytes);
       const documentElement = document.getElementById("document");
       documentElement.innerHTML = marked.parse(markdown);
+      const markdownRenderedAt = performance.now();
 
       // Keep fragment links inside this generated document. All other links
       // are handled by the native navigation policy.
@@ -85,6 +87,7 @@
           console.debug("Could not highlight code block", error);
         }
       });
+      const codeHighlightedAt = performance.now();
 
       const sidebar = document.getElementById("table-of-contents");
       const sidebarList = document.getElementById("table-of-contents-list");
@@ -151,6 +154,16 @@
       };
 
       if (root.children.length) sidebarList.append(renderOutline(root.children));
+
+      const outlineBuiltAt = performance.now();
+      window.mdviewRenderMetrics = {
+        markdownMilliseconds: markdownRenderedAt - renderStartedAt,
+        highlightingMilliseconds: codeHighlightedAt - markdownRenderedAt,
+        outlineMilliseconds: outlineBuiltAt - codeHighlightedAt,
+        totalMilliseconds: outlineBuiltAt - renderStartedAt,
+        headingCount: root.children.length,
+        codeBlockCount: documentElement.querySelectorAll("pre code").length
+      };
     })();
   </script>
 </body>

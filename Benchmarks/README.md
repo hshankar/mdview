@@ -24,3 +24,13 @@ Optional environment variables:
 Window timing uses `CGWindowListCopyWindowInfo` and stops when a new layer-zero window owned by `mdview` appears. It measures visible-window latency, not completion of document rendering.
 
 Keep `run.sh`, `window-benchmark.swift`, and `fixture.md` unchanged when comparing results. Changes to methodology require a new benchmark version and a new baseline.
+
+## Rendering benchmark
+
+`run-render.sh` measures Markdown-to-DOM rendering inside an offscreen `WKWebView`. It generates deterministic prose and code-heavy fixtures from 10 KiB through 100 KiB, records the first load plus repeated warm loads, and separates Marked, syntax-highlighting, and outline-building time.
+
+```sh
+Benchmarks/run-render.sh > result.md
+```
+
+Set `RUNS` to control the number of samples; it defaults to `6` (one first load and five warm loads). The generated fixtures are deliberately temporary, so the repository does not carry large benchmark-only documents.
