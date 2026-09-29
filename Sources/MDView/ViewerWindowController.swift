@@ -8,6 +8,8 @@ final class ViewerWindowController: NSWindowController {
 
     private let fileURL: URL
     private var webView: WKWebView?
+    private var loadingOverlay: NSView?
+    private var hasRevealedDocument = false
     private var renderer: DocumentRenderer?
     private var fileWatcher: FileWatcher?
     private var pendingScrollPosition: Double?
@@ -171,8 +173,6 @@ final class ViewerWindowController: NSWindowController {
 
         self.webView = webView
         installContentView(containing: webView)
-        window?.initialFirstResponder = webView
-        window?.makeFirstResponder(webView)
 
         guard loadFile(preservingScrollPosition: false) else { return }
         startWatchingFile()
@@ -262,10 +262,13 @@ final class ViewerWindowController: NSWindowController {
         controls.alignment = .centerY
         controls.spacing = 8
 
-        [webView, findBar, controls].forEach { $0.translatesAutoresizingMaskIntoConstraints = false }
+        let loadingOverlay = Self.makeLoadingView(filename: fileURL.lastPathComponent)
+
+        [webView, findBar, controls, loadingOverlay].forEach { $0.translatesAutoresizingMaskIntoConstraints = false }
         container.addSubview(webView)
         container.addSubview(findBar)
         findBar.addSubview(controls)
+        container.addSubview(loadingOverlay)
 
         let findBarHeightConstraint = findBar.heightAnchor.constraint(equalToConstant: 0)
         NSLayoutConstraint.activate([
@@ -282,9 +285,15 @@ final class ViewerWindowController: NSWindowController {
             webView.topAnchor.constraint(equalTo: findBar.bottomAnchor),
             webView.leadingAnchor.constraint(equalTo: container.leadingAnchor),
             webView.trailingAnchor.constraint(equalTo: container.trailingAnchor),
-            webView.bottomAnchor.constraint(equalTo: container.bottomAnchor)
+            webView.bottomAnchor.constraint(equalTo: container.bottomAnchor),
+
+            loadingOverlay.topAnchor.constraint(equalTo: container.topAnchor),
+            loadingOverlay.leadingAnchor.constraint(equalTo: container.leadingAnchor),
+            loadingOverlay.trailingAnchor.constraint(equalTo: container.trailingAnchor),
+            loadingOverlay.bottomAnchor.constraint(equalTo: container.bottomAnchor)
         ])
 
+        self.loadingOverlay = loadingOverlay
         self.findBar = findBar
         self.findBarHeightConstraint = findBarHeightConstraint
         self.findField = findField
@@ -372,12 +381,32 @@ final class ViewerWindowController: NSWindowController {
         }
     }
 
+    private func revealDocumentWhenReady() {
+        guard !hasRevealedDocument, let webView else { return }
+
+        webView.evaluateJavaScript("window.mdviewRenderMetrics?.complete === true") { [weak self] value, _ in
+            guard let self, !self.hasRevealedDocument else { return }
+            guard (value as? Bool) == true else {
+                DispatchQueue.main.asyncAfter(deadline: .now() + .milliseconds(5)) { [weak self] in
+                    self?.revealDocumentWhenReady()
+                }
+                return
+            }
+
+            self.hasRevealedDocument = true
+            self.loadingOverlay?.removeFromSuperview()
+            self.loadingOverlay = nil
+            self.window?.initialFirstResponder = webView
+            self.window?.makeFirstResponder(webView)
+        }
+    }
+
     private static func makeLoadingView(filename: String) -> NSView {
         let container = NSView()
         container.wantsLayer = true
         container.layer?.backgroundColor = NSColor.textBackgroundColor.cgColor
 
-        let label = NSTextField(labelWithString: "Opening \(filename)…")
+        let label = NSTextField(labelWithString: "Rendering \(filename)…")
         label.font = .systemFont(ofSize: 13)
         label.textColor = .secondaryLabelColor
         label.translatesAutoresizingMaskIntoConstraints = false
@@ -414,6 +443,8 @@ extension ViewerWindowController: WKNavigationDelegate {
     }
 
     func webView(_ webView: WKWebView, didFinish navigation: WKNavigation!) {
+        revealDocumentWhenReady()
+
         if let scrollPosition = pendingScrollPosition {
             pendingScrollPosition = nil
             webView.evaluateJavaScript("window.scrollTo(0, \(scrollPosition))")
