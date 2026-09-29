@@ -16,6 +16,8 @@ if (( RUNS < 2 )); then
     exit 2
 fi
 
+SYSTEM_SNAPSHOT=$(top -l 1 -n 0)
+export SYSTEM_SNAPSHOT
 FIXTURE_DIR="$ROOT/Benchmarks/Fixtures"
 
 swiftc -O Benchmarks/render-benchmark.swift \
@@ -32,6 +34,7 @@ done
 python3 - "$WORK_DIR" "$FIXTURE_DIR" "$RUNS" <<'PY'
 import datetime
 import json
+import os
 import platform
 import statistics
 import subprocess
@@ -54,7 +57,7 @@ hardware = subprocess.run(
 cpu = next((line.strip() for line in hardware.splitlines() if "Chip:" in line or "Processor Name:" in line), "Unknown")
 cores = next((line.strip() for line in hardware.splitlines() if "Total Number of Cores:" in line), "Unknown")
 memory = next((line.strip() for line in hardware.splitlines() if "Memory:" in line), "Unknown")
-top = subprocess.run(["top", "-l", "1", "-n", "0"], capture_output=True, text=True, check=True).stdout
+top = os.environ["SYSTEM_SNAPSHOT"]
 cpu_snapshot = next((line.strip() for line in top.splitlines() if line.startswith("CPU usage:")), "Unknown")
 memory_snapshot = next((line.strip() for line in top.splitlines() if line.startswith("PhysMem:")), "Unknown")
 swift = subprocess.run(["swift", "--version"], capture_output=True, text=True, check=True).stdout.splitlines()[0]
@@ -62,8 +65,8 @@ swift = subprocess.run(["swift", "--version"], capture_output=True, text=True, c
 print(f"- Platform: {platform.platform()}")
 print(f"- Hardware: {cpu}; {cores}; {memory}")
 print(f"- Toolchain: {swift}")
-print(f"- System CPU snapshot before report: {cpu_snapshot}")
-print(f"- System memory snapshot before report: {memory_snapshot}")
+print(f"- System CPU snapshot at suite start: {cpu_snapshot}")
+print(f"- System memory snapshot at suite start: {memory_snapshot}")
 print(f"- Samples per fixture: {runs} (first load plus {runs - 1} warm loads)")
 print("- Metrics: WebKit load-to-DOM wall time; JavaScript rendering stages exclude WebKit process startup.")
 print("- Host CPU/RSS: `/usr/bin/time -l` for the benchmark host only; WebKit helper-process usage is excluded.")
