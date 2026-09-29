@@ -3,7 +3,11 @@ import Foundation
 import WebKit
 
 struct RenderMetrics: Codable {
-    let parseMilliseconds: Double
+    let base64DecodeMilliseconds: Double
+    let byteArrayMilliseconds: Double
+    let utf8DecodeMilliseconds: Double
+    let lexerMilliseconds: Double
+    let htmlGenerationMilliseconds: Double
     let domInsertionMilliseconds: Double
     let highlightingMilliseconds: Double
     let outlineMilliseconds: Double

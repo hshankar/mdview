@@ -60,11 +60,17 @@
 
       const renderStartedAt = performance.now();
       const encodedMarkdown = "{{MARKDOWN_BASE64}}";
-      const bytes = Uint8Array.from(atob(encodedMarkdown), character => character.charCodeAt(0));
+      const decodedBase64 = atob(encodedMarkdown);
+      const base64DecodedAt = performance.now();
+      const bytes = Uint8Array.from(decodedBase64, character => character.charCodeAt(0));
+      const bytesConstructedAt = performance.now();
       const markdown = new TextDecoder("utf-8").decode(bytes);
+      const markdownDecodedAt = performance.now();
       const documentElement = document.getElementById("document");
-      const renderedMarkdown = marked.parse(markdown);
-      const markdownParsedAt = performance.now();
+      const markdownTokens = marked.lexer(markdown);
+      const markdownLexedAt = performance.now();
+      const renderedMarkdown = marked.parser(markdownTokens);
+      const htmlGeneratedAt = performance.now();
       documentElement.innerHTML = renderedMarkdown;
       const domInsertedAt = performance.now();
 
@@ -159,8 +165,12 @@
 
       const outlineBuiltAt = performance.now();
       window.mdviewRenderMetrics = {
-        parseMilliseconds: markdownParsedAt - renderStartedAt,
-        domInsertionMilliseconds: domInsertedAt - markdownParsedAt,
+        base64DecodeMilliseconds: base64DecodedAt - renderStartedAt,
+        byteArrayMilliseconds: bytesConstructedAt - base64DecodedAt,
+        utf8DecodeMilliseconds: markdownDecodedAt - bytesConstructedAt,
+        lexerMilliseconds: markdownLexedAt - markdownDecodedAt,
+        htmlGenerationMilliseconds: htmlGeneratedAt - markdownLexedAt,
+        domInsertionMilliseconds: domInsertedAt - htmlGeneratedAt,
         highlightingMilliseconds: codeHighlightedAt - domInsertedAt,
         outlineMilliseconds: outlineBuiltAt - codeHighlightedAt,
         layoutMilliseconds: 0,

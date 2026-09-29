@@ -73,8 +73,8 @@ print("- Host CPU/RSS: `/usr/bin/time -l` for the benchmark host only; WebKit he
 print()
 print("## Results")
 print()
-print("| Fixture | Markdown size | First-load wall | Warm wall median | Parse median | DOM insertion median | Highlight median | TOC median | Layout median | JS total median | Host CPU | Host max RSS |")
-print("| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |")
+print("| Fixture | Markdown size | First-load wall | Warm wall median | Base64 median | Byte array median | UTF-8 median | Lexer median | HTML generation median | DOM insertion median | Highlight median | TOC median | Layout median | JS total median | Host CPU | Host max RSS |")
+print("| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |")
 for fixture in fixtures:
     data = json.load(open(f"{work}/{fixture}.json"))
     samples = data["samples"]
@@ -89,7 +89,11 @@ for fixture in fixtures:
         f"| {fixture} | {data['bytes'] / 1024:.0f} KiB | "
         f"{samples[0]['wallMilliseconds']:.1f} ms | "
         f"{milliseconds([sample['wallMilliseconds'] for sample in warm])} ms | "
-        f"{milliseconds([item['parseMilliseconds'] for item in render])} ms | "
+        f"{milliseconds([item['base64DecodeMilliseconds'] for item in render])} ms | "
+        f"{milliseconds([item['byteArrayMilliseconds'] for item in render])} ms | "
+        f"{milliseconds([item['utf8DecodeMilliseconds'] for item in render])} ms | "
+        f"{milliseconds([item['lexerMilliseconds'] for item in render])} ms | "
+        f"{milliseconds([item['htmlGenerationMilliseconds'] for item in render])} ms | "
         f"{milliseconds([item['domInsertionMilliseconds'] for item in render])} ms | "
         f"{milliseconds([item['highlightingMilliseconds'] for item in render])} ms | "
         f"{milliseconds([item['outlineMilliseconds'] for item in render])} ms | "
