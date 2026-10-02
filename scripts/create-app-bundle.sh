@@ -13,6 +13,10 @@ source_binary=$1
 output_app=$2
 installed_binary=${3:-$source_binary}
 resource_bundle="$(dirname "$source_binary")/mdview_MDView.bundle"
+resource_directory=$resource_bundle
+if [[ -d "$resource_bundle/Contents/Resources" ]]; then
+    resource_directory="$resource_bundle/Contents/Resources"
+fi
 
 [[ -x "$source_binary" ]] || {
     echo "create-app-bundle: mdview executable not found: $source_binary" >&2
@@ -20,6 +24,10 @@ resource_bundle="$(dirname "$source_binary")/mdview_MDView.bundle"
 }
 [[ -d "$resource_bundle" ]] || {
     echo "create-app-bundle: resource bundle not found: $resource_bundle" >&2
+    exit 1
+}
+[[ -f "$resource_directory/AppIcon.icns" ]] || {
+    echo "create-app-bundle: app icon not found in resource bundle: $resource_bundle" >&2
     exit 1
 }
 
@@ -85,7 +93,7 @@ set_or_add_string CFBundleIconName MDView
 "$plist_buddy" -c 'Add :CFBundleDocumentTypes:0:LSItemContentTypes array' "$plist"
 "$plist_buddy" -c 'Add :CFBundleDocumentTypes:0:LSItemContentTypes:0 string net.daringfireball.markdown' "$plist"
 
-cp "$resource_bundle/AppIcon.icns" "$output_app/Contents/Resources/MDView.icns"
+cp "$resource_directory/AppIcon.icns" "$output_app/Contents/Resources/MDView.icns"
 plutil -lint "$plist" >/dev/null
 codesign --force --deep --sign - "$output_app" >/dev/null
 
