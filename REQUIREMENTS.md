@@ -240,10 +240,11 @@ This architecture is preferred over a custom GPU renderer because macOS already 
 
 - Provide an installable `mdview` command on the user's `PATH` through Homebrew or `make install`.
 - Create a `MDView.app` launcher automatically during installation so Markdown files can be opened from Finder while retaining the CLI entry point.
-- Publish tagged source releases that build on Intel and Apple silicon Macs.
+- Publish a tagged, universal prebuilt archive for Intel and Apple silicon Macs that targets macOS 13 or newer.
+- Provide a checksum-verifying installer that validates the host macOS version and architecture before installation.
 - Keep release source self-contained; do not require a package manager beyond the system Swift toolchain.
-- Bundle all required templates, styles, and highlighting assets in source builds.
-- Build and test Intel and Apple silicon source builds automatically in CI.
+- Bundle all required templates, styles, and highlighting assets in source and prebuilt releases.
+- Build and test Intel, Apple silicon, Swift 5.10, and current-toolchain configurations automatically in CI.
 - A future release may sign and notarize the generated app with a Developer ID for distribution outside source and Homebrew installs.
 
 ## 17. MVP acceptance criteria

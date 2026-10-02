@@ -29,19 +29,30 @@ jobs:
       - name: Run tests
         run: swift test
 
-      - name: Build universal binary from source
+      - name: Package universal release
         run: |
-          swift build -c release --arch arm64 --arch x86_64
-          bin_path="$(swift build -c release --arch arm64 --arch x86_64 --show-bin-path)"
-          lipo -archs "$bin_path/mdview" | grep -q arm64
-          lipo -archs "$bin_path/mdview" | grep -q x86_64
+          version="${GITHUB_REF_NAME#v}"
+          scripts/package-release.sh "$version" dist
 
-      - name: Create source release
+      - name: Test packaged installer
+        run: |
+          version="${GITHUB_REF_NAME#v}"
+          MDVIEW_ARCHIVE="$PWD/dist/mdview-$version-macos-universal.tar.gz" \
+          MDVIEW_CHECKSUM_FILE="$PWD/dist/mdview-$version-macos-universal.tar.gz.sha256" \
+          MDVIEW_INSTALL_DIR="$RUNNER_TEMP/mdview/bin" \
+          MDVIEW_APP_DIR="$RUNNER_TEMP/mdview/Applications" \
+          MDVIEW_REGISTER_APP=0 \
+            sh install.sh
+          test "$("$RUNNER_TEMP/mdview/bin/mdview" --version)" = "mdview $version"
+          codesign --verify --deep --strict "$RUNNER_TEMP/mdview/Applications/MDView.app"
+
+      - name: Create release
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
           version="${GITHUB_REF_NAME#v}"
           gh release create "$GITHUB_REF_NAME" \
+            dist/* \
             --verify-tag \
             --generate-notes \
             --title "mdview $version"

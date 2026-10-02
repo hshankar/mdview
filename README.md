@@ -27,12 +27,14 @@ mdview README.md
 - Custom Dock and minimized-window icon
 - A Finder-compatible `MDView.app` created automatically during installation
 
-## Requirements
+## Requirements and compatibility
 
 - macOS 13 or newer
 - An Intel or Apple silicon Mac
 
-Release archives are universal and do not require Swift, Xcode, Homebrew, or another language runtime on the destination Mac.
+The prebuilt release is universal, targets macOS 13, and does not require Swift or Xcode. The same download runs on both supported Mac architectures; users do not need to select a build based on their system.
+
+Building from source requires Swift 5.10 or newer. CI tests the minimum Swift 5.10 toolchain as well as the current toolchain.
 
 ## Install with Homebrew
 
@@ -41,7 +43,29 @@ brew tap hshankar/tap
 brew install hshankar/tap/mdview
 ```
 
-If Homebrew asks you to trust the third-party tap, run `brew trust hshankar/tap` and repeat the install. Homebrew builds `mdview` from its tagged source and installs the executable with its resource bundle.
+If Homebrew asks you to trust the third-party tap, run `brew trust hshankar/tap` and repeat the install. Homebrew installs the prebuilt universal release, so this route does not require a Swift toolchain. The formula prints the stable path to its generated `MDView.app`; open it once to register the app with macOS.
+
+## Install a prebuilt release
+
+Download, verify, and install the latest universal release with:
+
+```sh
+curl -fsSL https://raw.githubusercontent.com/hshankar/mdview/main/install.sh | sh
+```
+
+The installer verifies the published SHA-256 checksum and code signature, installs the CLI under `/usr/local/bin` when writable or `$HOME/.local/bin` otherwise, and creates `$HOME/Applications/MDView.app`.
+
+To install a specific release or choose custom locations:
+
+```sh
+curl -fsSL https://raw.githubusercontent.com/hshankar/mdview/v0.1.12/install.sh | \
+  MDVIEW_VERSION=0.1.12 \
+  MDVIEW_INSTALL_DIR="$HOME/.local/bin" \
+  MDVIEW_APP_DIR="$HOME/Applications" \
+  sh
+```
+
+Release binaries are currently ad-hoc signed rather than Developer ID signed and notarized.
 
 ## Build from source
 

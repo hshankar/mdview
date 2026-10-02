@@ -41,6 +41,37 @@ jobs:
           plutil -extract CFBundleDocumentTypes xml1 -o - .build/MDView.app/Contents/Info.plist | grep -q net.daringfireball.markdown
           codesign --verify --deep --strict .build/MDView.app
 
+      - name: Package and test universal installer
+        run: |
+          version="$(awk -F '"' '/static let version/ { print $2 }' Sources/MDView/CLI.swift)"
+          scripts/package-release.sh "$version" dist
+          MDVIEW_ARCHIVE="$PWD/dist/mdview-$version-macos-universal.tar.gz" \
+          MDVIEW_CHECKSUM_FILE="$PWD/dist/mdview-$version-macos-universal.tar.gz.sha256" \
+          MDVIEW_INSTALL_DIR="$RUNNER_TEMP/mdview/bin" \
+          MDVIEW_APP_DIR="$RUNNER_TEMP/mdview/Applications" \
+          MDVIEW_REGISTER_APP=0 \
+            sh install.sh
+          test "$("$RUNNER_TEMP/mdview/bin/mdview" --version)" = "mdview $version"
+          codesign --verify --deep --strict "$RUNNER_TEMP/mdview/Applications/MDView.app"
+
+  minimum-toolchain:
+    runs-on: macos-14
+    timeout-minutes: 20
+    env:
+      DEVELOPER_DIR: /Applications/Xcode_15.3.app/Contents/Developer
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09
+
+      - name: Verify Swift 5.10 compatibility
+        run: |
+          swift --version | grep -F "Apple Swift version 5.10"
+          xcodebuild -version
+          swift test
+          make app
+          codesign --verify --deep --strict .build/MDView.app
+
   intel-build:
     runs-on: macos-15-intel
     timeout-minutes: 10

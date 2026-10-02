@@ -3,7 +3,8 @@ DESTDIR ?=
 CONFIGURATION ?= release
 APPDIR ?= $(HOME)/Applications
 APP_BUNDLE ?= $(CURDIR)/.build/MDView.app
-.PHONY: build test icon app install uninstall clean
+VERSION ?=
+.PHONY: build test icon app package install uninstall clean
 
 build:
 	swift build -c $(CONFIGURATION)
@@ -17,6 +18,10 @@ icon:
 app: build
 	@bin_path="$$(swift build -c $(CONFIGURATION) --show-bin-path)"; \
 	./scripts/create-app-bundle.sh "$$bin_path/mdview" "$(APP_BUNDLE)"
+
+package:
+	@test -n "$(VERSION)" || { echo "Usage: make package VERSION=<version>" >&2; exit 64; }
+	./scripts/package-release.sh "$(VERSION)" dist
 
 install: build
 	@bin_path="$$(swift build -c $(CONFIGURATION) --show-bin-path)"; \
