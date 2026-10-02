@@ -25,6 +25,7 @@ mdview README.md
 - Immediate native window while WebKit initializes in the background
 - A warm viewer process makes subsequent invocations open new windows quickly
 - Custom Dock and minimized-window icon
+- A Finder-compatible `MDView.app` created automatically during installation
 
 ## Requirements
 
@@ -60,10 +61,22 @@ swift test
 make install PREFIX="$HOME/.local"
 ```
 
-The installed `mdview` executable and adjacent `mdview_MDView.bundle` resource directory are both required. Remove a source installation with:
+This installs the CLI and its resources under `$HOME/.local/bin` and creates `$HOME/Applications/MDView.app` for opening Markdown files from Finder. The app delegates to the installed CLI, so both are removed together with:
 
 ```sh
 make uninstall PREFIX="$HOME/.local"
+```
+
+Set `APPDIR` to use a different application directory:
+
+```sh
+make install PREFIX="$HOME/.local" APPDIR="/Applications"
+```
+
+You can also create a development app at `.build/MDView.app` without installing:
+
+```sh
+make app
 ```
 
 The command hands the file to a detached viewer process and returns immediately. Later invocations reuse that process and open another window. After the last viewer window closes, the process remains warm for five minutes and then exits automatically. `Command-Q` exits it immediately.

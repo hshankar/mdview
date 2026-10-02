@@ -33,6 +33,14 @@ jobs:
           lipo -archs "$bin_path/mdview" | grep -q arm64
           lipo -archs "$bin_path/mdview" | grep -q x86_64
 
+      - name: Build and validate app bundle
+        run: |
+          make app
+          test -x .build/MDView.app/Contents/MacOS/droplet
+          test "$(plutil -extract CFBundleIdentifier raw .build/MDView.app/Contents/Info.plist)" = "com.hshankar.mdview"
+          plutil -extract CFBundleDocumentTypes xml1 -o - .build/MDView.app/Contents/Info.plist | grep -q net.daringfireball.markdown
+          codesign --verify --deep --strict .build/MDView.app
+
   intel-build:
     runs-on: macos-15-intel
     timeout-minutes: 10

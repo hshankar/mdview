@@ -239,11 +239,12 @@ This architecture is preferred over a custom GPU renderer because macOS already 
 ## 16. Distribution
 
 - Provide an installable `mdview` command on the user's `PATH` through Homebrew or `make install`.
+- Create a `MDView.app` launcher automatically during installation so Markdown files can be opened from Finder while retaining the CLI entry point.
 - Publish tagged source releases that build on Intel and Apple silicon Macs.
 - Keep release source self-contained; do not require a package manager beyond the system Swift toolchain.
 - Bundle all required templates, styles, and highlighting assets in source builds.
 - Build and test Intel and Apple silicon source builds automatically in CI.
-- A future signed and notarized `.app` bundle may support opening `.md` files from Finder while retaining the CLI entry point.
+- A future release may sign and notarize the generated app with a Developer ID for distribution outside source and Homebrew installs.
 
 ## 17. MVP acceptance criteria
 
@@ -267,4 +268,3 @@ The MVP is complete when all of the following are true:
 - Copy buttons on code blocks
 - Remembered window size, position, zoom, and scroll position
 - Quick Look extension
-- Finder file association
