@@ -124,9 +124,12 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
         window.delegate = self
         viewerWindowControllers[ObjectIdentifier(window)] = controller
 
-        controller.showWindow(nil)
-        NSApplication.shared.unhide(nil)
-        NSApplication.shared.activate(ignoringOtherApps: true)
+        controller.onInitialDocumentReady = { [weak controller] in
+            guard let controller else { return }
+            controller.showWindow(nil)
+            NSApplication.shared.unhide(nil)
+            NSApplication.shared.activate(ignoringOtherApps: true)
+        }
         controller.beginLoading()
     }
 

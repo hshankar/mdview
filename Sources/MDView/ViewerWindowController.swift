@@ -7,8 +7,8 @@ final class ViewerWindowController: NSWindowController {
     private static let sharedRenderer = Result { try DocumentRenderer() }
 
     private let fileURL: URL
+    var onInitialDocumentReady: (() -> Void)?
     private var webView: WKWebView?
-    private var loadingOverlay: NSView?
     private var hasRevealedDocument = false
     private var renderer: DocumentRenderer?
     private var fileWatcher: FileWatcher?
@@ -32,7 +32,7 @@ final class ViewerWindowController: NSWindowController {
         window.title = fileURL.lastPathComponent
         window.tabbingMode = .disallowed
         window.miniwindowImage = ApplicationIcon.image()
-        window.contentView = Self.makeLoadingView(filename: fileURL.lastPathComponent)
+        window.contentView = NSView()
         window.center()
         window.setFrameAutosaveName("mdview.viewer")
 
@@ -262,13 +262,10 @@ final class ViewerWindowController: NSWindowController {
         controls.alignment = .centerY
         controls.spacing = 8
 
-        let loadingOverlay = Self.makeLoadingView(filename: fileURL.lastPathComponent)
-
-        [webView, findBar, controls, loadingOverlay].forEach { $0.translatesAutoresizingMaskIntoConstraints = false }
+        [webView, findBar, controls].forEach { $0.translatesAutoresizingMaskIntoConstraints = false }
         container.addSubview(webView)
         container.addSubview(findBar)
         findBar.addSubview(controls)
-        container.addSubview(loadingOverlay)
 
         let findBarHeightConstraint = findBar.heightAnchor.constraint(equalToConstant: 0)
         NSLayoutConstraint.activate([
@@ -285,15 +282,9 @@ final class ViewerWindowController: NSWindowController {
             webView.topAnchor.constraint(equalTo: findBar.bottomAnchor),
             webView.leadingAnchor.constraint(equalTo: container.leadingAnchor),
             webView.trailingAnchor.constraint(equalTo: container.trailingAnchor),
-            webView.bottomAnchor.constraint(equalTo: container.bottomAnchor),
-
-            loadingOverlay.topAnchor.constraint(equalTo: container.topAnchor),
-            loadingOverlay.leadingAnchor.constraint(equalTo: container.leadingAnchor),
-            loadingOverlay.trailingAnchor.constraint(equalTo: container.trailingAnchor),
-            loadingOverlay.bottomAnchor.constraint(equalTo: container.bottomAnchor)
+            webView.bottomAnchor.constraint(equalTo: container.bottomAnchor)
         ])
 
-        self.loadingOverlay = loadingOverlay
         self.findBar = findBar
         self.findBarHeightConstraint = findBarHeightConstraint
         self.findField = findField
@@ -394,29 +385,12 @@ final class ViewerWindowController: NSWindowController {
             }
 
             self.hasRevealedDocument = true
-            self.loadingOverlay?.removeFromSuperview()
-            self.loadingOverlay = nil
             self.window?.initialFirstResponder = webView
             self.window?.makeFirstResponder(webView)
+            let onInitialDocumentReady = self.onInitialDocumentReady
+            self.onInitialDocumentReady = nil
+            onInitialDocumentReady?()
         }
-    }
-
-    private static func makeLoadingView(filename: String) -> NSView {
-        let container = NSView()
-        container.wantsLayer = true
-        container.layer?.backgroundColor = NSColor.textBackgroundColor.cgColor
-
-        let label = NSTextField(labelWithString: "Rendering \(filename)…")
-        label.font = .systemFont(ofSize: 13)
-        label.textColor = .secondaryLabelColor
-        label.translatesAutoresizingMaskIntoConstraints = false
-        container.addSubview(label)
-
-        NSLayoutConstraint.activate([
-            label.centerXAnchor.constraint(equalTo: container.centerXAnchor),
-            label.centerYAnchor.constraint(equalTo: container.centerYAnchor)
-        ])
-        return container
     }
 }
 
